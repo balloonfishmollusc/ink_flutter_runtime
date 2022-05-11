@@ -69,7 +69,7 @@ class CallStackThread {
         currentContainerPathStr = currentContainerPathStrToken.toString();
 
         var threadPointerResult =
-            storyContext.contentAtPath(Path.new3(currentContainerPathStr));
+            storyContext.ContentAtPath(Path.new3(currentContainerPathStr));
         pointer.container = threadPointerResult.container;
         pointer.index = jElementObj["idx"] as int;
 
@@ -79,7 +79,7 @@ class CallStackThread {
                   currentContainerPathStr +
                   ". Has the story changed since this save data was created?");
         } else if (threadPointerResult.approximate) {
-          storyContext.warning(
+          storyContext.Warning(
               "When loading state, exact internal story location couldn't be found: '" +
                   currentContainerPathStr +
                   "', so it was approximated to '" +
@@ -105,7 +105,7 @@ class CallStackThread {
     dynamic prevContentObjPath = jThreadObj["previousContentObject"];
     if (prevContentObjPath != null) {
       var prevPath = Path.new3(prevContentObjPath as String);
-      previousPointer = storyContext.pointerAtPath(prevPath);
+      previousPointer = storyContext.PointerAtPath(prevPath);
     }
   }
 
@@ -323,7 +323,7 @@ class CallStack {
     }
   }
 
-  CallStackThread? threadWithIndex(int index) {
+  CallStackThread? ThreadWithIndex(int index) {
     var iterable = _threads.where((t) => t.threadIndex == index);
     if (iterable.isEmpty) return null;
     return iterable.first;

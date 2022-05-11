@@ -38,7 +38,7 @@ class Flow {
     for (Choice c in currentChoices) {
       c.originalThreadIndex = c.threadAtGeneration!.threadIndex;
 
-      if (callStack.threadWithIndex(c.originalThreadIndex) == null) {
+      if (callStack.ThreadWithIndex(c.originalThreadIndex) == null) {
         if (!hasChoiceThreads) {
           hasChoiceThreads = true;
           dict["choiceThreads"] = <int, dynamic>{};
@@ -64,7 +64,7 @@ class Flow {
   void LoadFlowChoiceThreads(Map<String, dynamic> jChoiceThreads, Story story) {
     for (var choice in currentChoices) {
       var foundActiveThread =
-          callStack.threadWithIndex(choice.originalThreadIndex);
+          callStack.ThreadWithIndex(choice.originalThreadIndex);
       if (foundActiveThread != null) {
         choice.threadAtGeneration = foundActiveThread.copy();
       } else {

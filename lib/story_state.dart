@@ -66,7 +66,7 @@ class StoryState {
     int? visitCountOut;
 
     if (_patch != null) {
-      var container = story.contentAtPath(Path.new3(pathString)).container;
+      var container = story.ContentAtPath(Path.new3(pathString)).container;
       if (container == null) {
         throw Exception("Content at path not found: " + pathString);
       }
@@ -83,7 +83,7 @@ class StoryState {
 
   int VisitCountForContainer(Container container) {
     if (!container.visitsShouldBeCounted) {
-      story.error(
+      story.Error(
           "Read count for target (${container.name} - on $container.debugMetadata) unknown.");
       return 0;
     }
@@ -125,7 +125,7 @@ class StoryState {
 
   int TurnsSinceForContainer(Container container) {
     if (!container.turnIndexShouldBeCounted) {
-      story.error(
+      story.Error(
           "TURNS_SINCE() for target (${container.name} - on ${container.debugMetadata}) unknown.");
     }
 
@@ -605,7 +605,7 @@ class StoryState {
     dynamic currentDivertTargetPath = jObject["currentDivertTarget"];
     if (currentDivertTargetPath != null) {
       var divertPath = Path.new3(currentDivertTargetPath.toString());
-      divertedPointer = story.pointerAtPath(divertPath);
+      divertedPointer = story.PointerAtPath(divertPath);
     }
 
     _visitCounts = Json.JObjectToIntDictionary(
@@ -1040,7 +1040,7 @@ class StoryState {
     // Changing direction, assume we need to clear current set of choices
     _currentFlow.currentChoices.clear();
 
-    var newPointer = story.pointerAtPath(path);
+    var newPointer = story.PointerAtPath(path);
     if (!newPointer.isNull && newPointer.index == -1) {
       newPointer.index = 0;
     }

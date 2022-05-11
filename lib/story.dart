@@ -214,10 +214,10 @@ class Story extends RuntimeObject {
 
     _mainContentContainer = Json.JTokenToRuntimeObject(rootToken) as Container;
 
-    resetState();
+    ResetState();
   }
 
-  String toJson() {
+  String ToJson() {
     var dict = <String, dynamic>{};
     dict["inkVersion"] = inkVersionCurrent;
     dict["root"] = Json.WriteRuntimeContainer(_mainContentContainer);
@@ -228,15 +228,15 @@ class Story extends RuntimeObject {
   /// Reset the Story back to its initial state as it was when it was
   /// first constructed.
   /// </summary>
-  void resetState() {
+  void ResetState() {
     _state = StoryState(this);
     _state!.variablesState!.variableChangedEvent
-        .addListener(variableStateDidChangeEvent);
+        .addListener(VariableStateDidChangeEvent);
 
-    resetGlobals();
+    ResetGlobals();
   }
 
-  void resetErrors() {
+  void ResetErrors() {
     _state!.ResetErrors();
   }
 
@@ -252,15 +252,15 @@ class Story extends RuntimeObject {
     _state!.ForceEnd();
   }
 
-  void resetGlobals() {
+  void ResetGlobals() {
     if (_mainContentContainer.namedContent.containsKey("global decl")) {
       var originalPointer = state.currentPointer;
 
-      choosePath(Path.new3("global decl"), false);
+      ChoosePath(Path.new3("global decl"), false);
 
       // Continue, but without validating external bindings,
       // since we may be doing this reset at initialisation time.
-      continueInternal();
+      ContinueInternal();
 
       state.currentPointer = originalPointer;
     }
@@ -268,7 +268,7 @@ class Story extends RuntimeObject {
     state.variablesState!.SnapshotDefaultGlobals();
   }
 
-  void switchFlow(String flowName) {
+  void SwitchFlow(String flowName) {
     if (_asyncSaving) {
       throw Exception(
           "Story is already in background saving mode, can't switch flow to " +
@@ -278,11 +278,11 @@ class Story extends RuntimeObject {
     state.SwitchFlow_Internal(flowName);
   }
 
-  void removeFlow(String flowName) {
+  void RemoveFlow(String flowName) {
     state.RemoveFlow_Internal(flowName);
   }
 
-  void switchToDefaultFlow() {
+  void SwitchToDefaultFlow() {
     state.SwitchToDefaultFlow_Internal();
   }
 
@@ -294,7 +294,7 @@ class Story extends RuntimeObject {
   /// </summary>
   /// <returns>The line of text content.</returns>
   String Continue() {
-    continueInternal();
+    ContinueInternal();
     return currentText;
   }
 
@@ -307,7 +307,7 @@ class Story extends RuntimeObject {
     return state.canContinue;
   }
 
-  void continueInternal() {
+  void ContinueInternal() {
     //if( _profiler != null )
     //    _profiler.PreContinue();
 
@@ -336,9 +336,9 @@ class Story extends RuntimeObject {
     _sawLookaheadUnsafeFunctionAfterNewline = false;
     do {
       try {
-        outputStreamEndsInNewline = continueSingleStep();
+        outputStreamEndsInNewline = ContinueSingleStep();
       } on StoryException catch (e) {
-        addError(e.message, e.useEndLineNumber);
+        AddError(e.message, e.useEndLineNumber);
         break;
       }
 
@@ -357,13 +357,13 @@ class Story extends RuntimeObject {
     if (outputStreamEndsInNewline || !canContinue) {
       // Need to rewind, due to evaluating further than we should?
       if (_stateSnapshotAtLastNewline != null) {
-        restoreStateSnapshot();
+        RestoreStateSnapshot();
       }
 
       // Finished a section of content / reached a choice point?
       if (!canContinue) {
         if (state.callStack.canPopThread) {
-          addError(
+          AddError(
               "Thread available to pop, threads should always be flat by the end of evaluation?");
         }
 
@@ -371,16 +371,16 @@ class Story extends RuntimeObject {
             !state.didSafeExit &&
             _temporaryEvaluationContainer == null) {
           if (state.callStack.canPopType(PushPopType.Tunnel)) {
-            addError(
+            AddError(
                 "unexpectedly reached end of content. Do you need a '->->' to return from a tunnel?");
           } else if (state.callStack.canPopType(PushPopType.Function)) {
-            addError(
+            AddError(
                 "unexpectedly reached end of content. Do you need a '~ return'?");
           } else if (!state.callStack.canPop) {
-            addError(
+            AddError(
                 "ran out of content. Do you need a '-> DONE' or '-> END'?");
           } else {
-            addError(
+            AddError(
                 "unexpectedly reached end of content for unknown reason. Please debug compiler!");
           }
         }
@@ -416,7 +416,7 @@ class Story extends RuntimeObject {
             onError.fire([err, ErrorType.Warning]);
           }
         }
-        resetErrors();
+        ResetErrors();
       }
 
       // Throw an exception since there's no error handler
@@ -455,19 +455,19 @@ class Story extends RuntimeObject {
     }
   }
 
-  bool continueSingleStep() {
+  bool ContinueSingleStep() {
     //if (_profiler != null)
     //    _profiler.PreStep ();
 
     // Run main step function (walks through content)
-    step();
+    Step();
 
     //if (_profiler != null)
     //    _profiler.PostStep ();
 
     // Run out of content and we have a default invisible choice that we can follow?
     if (!canContinue && !state.callStack.elementIsEvaluateFromGame) {
-      tryFollowDefaultInvisibleChoice();
+      TryFollowDefaultInvisibleChoice();
     }
 
     //if (_profiler != null)
@@ -480,7 +480,7 @@ class Story extends RuntimeObject {
       if (_stateSnapshotAtLastNewline != null) {
         // Has proper text or a tag been added? Then we know that the newline
         // that was previously added is definitely the end of the line.
-        var change = calculateNewlineOutputStateChange(
+        var change = CalculateNewlineOutputStateChange(
             _stateSnapshotAtLastNewline!.currentText!,
             state.currentText!,
             _stateSnapshotAtLastNewline!.currentTags.length,
@@ -490,7 +490,7 @@ class Story extends RuntimeObject {
         // want to rewind to that point.
         if (change == OutputStateChange.ExtendedBeyondNewline ||
             _sawLookaheadUnsafeFunctionAfterNewline) {
-          restoreStateSnapshot();
+          RestoreStateSnapshot();
 
           // Hit a newline for sure, we're done
           return true;
@@ -499,7 +499,7 @@ class Story extends RuntimeObject {
         // Newline that previously existed is no longer valid - e.g.
         // glue was encounted that caused it to be removed.
         else if (change == OutputStateChange.NewlineRemoved) {
-          discardSnapshot();
+          DiscardSnapshot();
         }
       }
 
@@ -515,14 +515,14 @@ class Story extends RuntimeObject {
           // Hello world\n            // record state at the end of here
           // ~ complexCalculation()   // don't actually need this unless it generates text
           if (_stateSnapshotAtLastNewline == null) {
-            stateSnapshot();
+            StateSnapshot();
           }
         }
 
         // Can't continue, so we're about to exit - make sure we
         // don't have an old state hanging around.
         else {
-          discardSnapshot();
+          DiscardSnapshot();
         }
       }
     }
@@ -534,7 +534,7 @@ class Story extends RuntimeObject {
     return false;
   }
 
-  OutputStateChange calculateNewlineOutputStateChange(
+  OutputStateChange CalculateNewlineOutputStateChange(
       String prevText, String currText, int prevTagCount, int currTagCount) {
     // Simple case: nothing's changed, and we still have a newline
     // at the end of the current content
@@ -585,11 +585,11 @@ class Story extends RuntimeObject {
     return sb.toString();
   }
 
-  SearchResult contentAtPath(Path path) {
+  SearchResult ContentAtPath(Path path) {
     return mainContentContainer.contentAtPath(path);
   }
 
-  Container? knotContainerWithName(String name) {
+  Container? KnotContainerWithName(String name) {
     INamedContent? namedContainer = mainContentContainer.namedContent[name];
     if (namedContainer != null) {
       return namedContainer as Container;
@@ -598,7 +598,7 @@ class Story extends RuntimeObject {
     }
   }
 
-  Pointer pointerAtPath(Path path) {
+  Pointer PointerAtPath(Path path) {
     if (path.length == 0) {
       return Pointer.Null;
     }
@@ -621,10 +621,10 @@ class Story extends RuntimeObject {
 
     if (result.obj == null ||
         result.obj == mainContentContainer && pathLengthToUse > 0) {
-      error(
+      Error(
           "Failed to find content at path '$path', and no approximation of it was possible.");
     } else if (result.approximate) {
-      warning(
+      Warning(
           "Failed to find content at path '$path', so it was approximated to: '${result.obj!.path}'.");
     }
 
@@ -636,12 +636,12 @@ class Story extends RuntimeObject {
   //  - _stateSnapshotAtLastNewline (has older patch)
   //  - _state (current, being patched)
 
-  void stateSnapshot() {
+  void StateSnapshot() {
     _stateSnapshotAtLastNewline = _state;
     _state = _state!.CopyAndStartPatching();
   }
 
-  void restoreStateSnapshot() {
+  void RestoreStateSnapshot() {
     // Patched state had temporarily hijacked our
     // VariablesState and set its own callstack on it,
     // so we need to restore that.
@@ -660,7 +660,7 @@ class Story extends RuntimeObject {
     }
   }
 
-  void discardSnapshot() {
+  void DiscardSnapshot() {
     // Normally we want to integrate the patch
     // into the main global/counts dictionaries.
     // However, if we're in the middle of async
@@ -684,7 +684,7 @@ class Story extends RuntimeObject {
   /// in its usual mode.
   /// </summary>
   /// <returns>The state for background thread save.</returns>
-  StoryState copyStateForBackgroundThreadSave() {
+  StoryState CopyStateForBackgroundThreadSave() {
     if (_asyncSaving) {
       throw Exception(
           "Story is already in background saving mode, can't call CopyStateForBackgroundThreadSave again!");
@@ -699,7 +699,7 @@ class Story extends RuntimeObject {
   /// See CopyStateForBackgroundThreadSave. This method releases the
   /// "frozen" save state, applying its patch that it was using internally.
   /// </summary>
-  void backgroundSaveComplete() {
+  void BackgroundSaveComplete() {
     // CopyStateForBackgroundThreadSave must be called outside
     // of any async ink evaluation, since otherwise you'd be saving
     // during an intermediate state.
@@ -717,7 +717,7 @@ class Story extends RuntimeObject {
     _asyncSaving = false;
   }
 
-  void step() {
+  void Step() {
     bool shouldAddToStream = true;
 
     // Get current content
@@ -752,7 +752,7 @@ class Story extends RuntimeObject {
     // Stop flow if we hit a stack pop when we're unable to pop (e.g. return/done statement in knot
     // that was diverted to rather than called as a function)
     var currentContentObj = pointer.resolve();
-    bool isLogicOrFlowControl = performLogicAndFlowControl(currentContentObj!);
+    bool isLogicOrFlowControl = PerformLogicAndFlowControl(currentContentObj!);
 
     // Has flow been forced to end by flow control above?
     if (state.currentPointer.isNull) {
@@ -766,7 +766,7 @@ class Story extends RuntimeObject {
     // Choice with condition?
     var choicePoint = tryCast<ChoicePoint>(currentContentObj);
     if (choicePoint != null) {
-      var choice = processChoice(choicePoint);
+      var choice = ProcessChoice(choicePoint);
       if (choice != null) {
         state.generatedChoices.add(choice);
       }
@@ -806,7 +806,7 @@ class Story extends RuntimeObject {
     }
 
     // Increment the content pointer, following diverts if necessary
-    nextContent();
+    NextContent();
 
     // Starting a thread should be done after the increment to the content pointer,
     // so that when returning from the thread, it returns to the content after this instruction.
@@ -831,7 +831,7 @@ class Story extends RuntimeObject {
   }
 
   final List<Container> _prevContainers = [];
-  void visitChangedContainersDueToDivert() {
+  void VisitChangedContainersDueToDivert() {
     var previousPointer = state.previousPointer;
     var pointer = state.currentPointer;
 
@@ -887,7 +887,7 @@ class Story extends RuntimeObject {
     }
   }
 
-  Choice? processChoice(ChoicePoint choicePoint) {
+  Choice? ProcessChoice(ChoicePoint choicePoint) {
     bool showChoice = true;
 
     // Don't create choice if choice point doesn't pass conditional
@@ -955,7 +955,7 @@ class Story extends RuntimeObject {
 
       if (val is DivertTargetValue) {
         var divTarget = val;
-        error(
+        Error(
             "Shouldn't use a divert target (to ${divTarget.targetPath}) as a conditional value. Did you intend a function call 'likeThis()' or a read count check 'likeThis'? (no arrows)");
         return false;
       }
@@ -971,7 +971,7 @@ class Story extends RuntimeObject {
   /// </summary>
   /// <returns><c>true</c> if dynamic was logic or flow control, <c>false</c> if it's normal content.</returns>
   /// <param name="contentObj">Content dynamic.</param>
-  bool performLogicAndFlowControl(RuntimeObject? contentObj) {
+  bool PerformLogicAndFlowControl(RuntimeObject? contentObj) {
     if (contentObj == null) {
       return false;
     }
@@ -995,7 +995,7 @@ class Story extends RuntimeObject {
         var varContents = state.variablesState!.GetVariableWithName(varName!);
 
         if (varContents == null) {
-          error(
+          Error(
               "Tried to divert using a target from a variable that could not be found (" +
                   varName +
                   ")");
@@ -1010,13 +1010,13 @@ class Story extends RuntimeObject {
             errorMessage += "contained '$varContents'.";
           }
 
-          error(errorMessage);
+          Error(errorMessage);
         }
 
         var target = varContents as DivertTargetValue;
-        state.divertedPointer = pointerAtPath(target.targetPath!);
+        state.divertedPointer = PointerAtPath(target.targetPath!);
       } else if (currentDivert.isExternal) {
-        callExternalFunction(
+        CallExternalFunction(
             currentDivert.targetPathString!, currentDivert.externalArgs);
         return true;
       } else {
@@ -1031,10 +1031,10 @@ class Story extends RuntimeObject {
       if (state.divertedPointer!.isNull && !currentDivert.isExternal) {
         // Human readable name available - runtime divert is part of a hard-written divert that to missing content
         if (currentDivert.debugMetadata?.sourceName != null) {
-          error("Divert target doesn't exist: " +
+          Error("Divert target doesn't exist: " +
               currentDivert.debugMetadata!.sourceName!);
         } else {
-          error("Divert resolution failed: " + currentDivert.toString());
+          Error("Divert resolution failed: " + currentDivert.toString());
         }
       }
 
@@ -1121,14 +1121,14 @@ class Story extends RuntimeObject {
 
             var errorMsg = "Found ${names[popType]}, when expected $expected";
 
-            error(errorMsg);
+            Error(errorMsg);
           } else {
             state.PopCallstack();
 
             // Does tunnel onwards override by diverting to a ->-> target?
             if (overrideTunnelReturnTarget != null) {
               state.divertedPointer =
-                  pointerAtPath(overrideTunnelReturnTarget.targetPath!);
+                  PointerAtPath(overrideTunnelReturnTarget.targetPath!);
             }
           }
 
@@ -1199,7 +1199,7 @@ class Story extends RuntimeObject {
               extraNote =
                   ". Did you accidentally pass a read count ('knot_name') instead of a target ('-> knot_name')?";
             }
-            error(
+            Error(
                 "TURNS_SINCE expected a divert target (knot, stitch, label name), but saw " +
                     target.toString() +
                     extraNote);
@@ -1207,7 +1207,7 @@ class Story extends RuntimeObject {
           }
 
           var divertTarget = target.tryCast<DivertTargetValue>();
-          var container = contentAtPath(divertTarget!.targetPath!)
+          var container = ContentAtPath(divertTarget!.targetPath!)
               .correctObj
               ?.tryCast<Container>();
 
@@ -1225,7 +1225,7 @@ class Story extends RuntimeObject {
               eitherCount = 0;
             } // visit count, assume 0 to default to allowing entry
 
-            warning("Failed to find container for $evalCommand lookup at " +
+            Warning("Failed to find container for $evalCommand lookup at " +
                 divertTarget.targetPath.toString());
           }
 
@@ -1238,18 +1238,18 @@ class Story extends RuntimeObject {
             var minInt = state.PopEvaluationStack().tryCast<IntValue>();
 
             if (minInt == null) {
-              error("Invalid value for minimum parameter of RANDOM(min, max)");
+              Error("Invalid value for minimum parameter of RANDOM(min, max)");
             }
 
             if (maxInt == null) {
-              error("Invalid value for maximum parameter of RANDOM(min, max)");
+              Error("Invalid value for maximum parameter of RANDOM(min, max)");
             }
 
             // +1 because it's inclusive of min and max, for e.g. RANDOM(1,6) for a dice roll.
             int randomRange = maxInt!.value - minInt!.value + 1;
 
             if (randomRange <= 0) {
-              error(
+              Error(
                   "RANDOM was called with minimum as ${minInt.value} and maximum as ${maxInt.value}. The maximum must be larger");
             }
 
@@ -1268,7 +1268,7 @@ class Story extends RuntimeObject {
         case CommandType.SeedRandom:
           var seed = state.PopEvaluationStack().tryCast<IntValue>();
           if (seed == null) {
-            error("Invalid value passed to SEED_RANDOM");
+            Error("Invalid value passed to SEED_RANDOM");
           }
 
           // Story seed affects both RANDOM and shuffle behaviour
@@ -1287,7 +1287,7 @@ class Story extends RuntimeObject {
           break;
 
         case CommandType.SequenceShuffleIndex:
-          var shuffleIndex = nextSequenceShuffleIndex();
+          var shuffleIndex = NextSequenceShuffleIndex();
           state.PushEvaluationStack(IntValue(shuffleIndex));
           break;
 
@@ -1319,7 +1319,7 @@ class Story extends RuntimeObject {
           state.ForceEnd();
           break;
         default:
-          error("unhandled ControlCommand: $evalCommand");
+          Error("unhandled ControlCommand: $evalCommand");
           break;
       }
 
@@ -1357,7 +1357,7 @@ class Story extends RuntimeObject {
         foundValue = state.variablesState!.GetVariableWithName(varRef.name!);
 
         if (foundValue == null) {
-          warning(
+          Warning(
               "Variable not found: '${varRef.name}'. Using default value of 0 (false). This can happen with temporary variables if the declaration hasn't yet been hit. Globals are always given a default value on load if a value doesn't exist in the save state.");
           foundValue = IntValue(0);
         }
@@ -1417,7 +1417,7 @@ class Story extends RuntimeObject {
   /// <param name="path">A dot-separted path String, as specified above.</param>
   /// <param name="resetCallstack">Whether to reset the callstack first (see summary description).</param>
   /// <param name="arguments">Optional set of arguments to pass, if path is to a knot that takes them.</param>
-  void choosePathString(String path,
+  void ChoosePathString(String path,
       [bool resetCallstack = true, List? arguments]) {
     onChoosePathString.fire([path, arguments]);
     if (resetCallstack) {
@@ -1442,14 +1442,14 @@ class Story extends RuntimeObject {
     }
 
     state.PassArgumentsToEvaluationStack(arguments);
-    choosePath(Path.new3(path));
+    ChoosePath(Path.new3(path));
   }
 
-  void choosePath(Path p, [bool incrementingTurnIndex = true]) {
+  void ChoosePath(Path p, [bool incrementingTurnIndex = true]) {
     state.SetChosenPath(p, incrementingTurnIndex);
 
     // Take a note of newly visited containers for read counts etc
-    visitChangedContainersDueToDivert();
+    VisitChangedContainersDueToDivert();
   }
 
   /// <summary>
@@ -1457,7 +1457,7 @@ class Story extends RuntimeObject {
   /// index. Internally, this sets the current content path to that
   /// pointed to by the Choice, ready to continue story evaluation.
   /// </summary>
-  void chooseChoiceIndex(int choiceIdx) {
+  void ChooseChoiceIndex(int choiceIdx) {
     var choices = currentChoices;
     Assert(choiceIdx >= 0 && choiceIdx < choices.length, "choice out of range");
 
@@ -1470,7 +1470,7 @@ class Story extends RuntimeObject {
     onMakeChoice.fire([choiceToChoose]);
     state.callStack.currentThread = choiceToChoose.threadAtGeneration!;
 
-    choosePath(choiceToChoose.targetPath!);
+    ChoosePath(choiceToChoose.targetPath!);
   }
 
   /// <summary>
@@ -1478,9 +1478,9 @@ class Story extends RuntimeObject {
   /// </summary>
   /// <returns>True if the function exists, else false.</returns>
   /// <param name="functionName">The name of the function as declared in ink.</param>
-  bool hasFunction(String functionName) {
+  bool HasFunction(String functionName) {
     try {
-      return knotContainerWithName(functionName) != null;
+      return KnotContainerWithName(functionName) != null;
     } catch (_) {
       return false;
     }
@@ -1492,8 +1492,8 @@ class Story extends RuntimeObject {
   /// <returns>The return value as returned from the ink function with `~ return myValue`, or null if nothing is returned.</returns>
   /// <param name="functionName">The name of the function as declared in ink.</param>
   /// <param name="arguments">The arguments that the ink function takes, if any. Note that we don't (can't) do any validation on the number of arguments right now, so make sure you get it right!</param>
-  dynamic evaluateFunction(String functionName, [List? arguments]) {
-    var dict = evaluateFunction(functionName, arguments);
+  dynamic EvaluateFunction(String functionName, [List? arguments]) {
+    var dict = EvaluateFunction(functionName, arguments);
     return dict['return_value'];
   }
 
@@ -1505,7 +1505,7 @@ class Story extends RuntimeObject {
   /// <param name="functionName">The name of the function as declared in ink.</param>
   /// <param name="textOutput">The text content produced by the function via normal ink, if any.</param>
   /// <param name="arguments">The arguments that the ink function takes, if any. Note that we don't (can't) do any validation on the number of arguments right now, so make sure you get it right!</param>
-  Map<String, dynamic> evaluateFunctionWithTextOutput(String functionName,
+  Map<String, dynamic> EvaluateFunctionWithTextOutput(String functionName,
       [List? arguments]) {
     onEvaluateFunction.fire([functionName, arguments]);
 
@@ -1514,7 +1514,7 @@ class Story extends RuntimeObject {
     }
 
     // Get the content that we need to run
-    var funcContainer = knotContainerWithName(functionName);
+    var funcContainer = KnotContainerWithName(functionName);
     if (funcContainer == null) {
       throw Exception("Function doesn't exist: '" + functionName + "'");
     }
@@ -1549,7 +1549,7 @@ class Story extends RuntimeObject {
 
   // Evaluate a "hot compiled" piece of ink content, as used by the REPL-like
   // CommandLinePlayer.
-  RuntimeObject? evaluateExpression(Container exprContainer) {
+  RuntimeObject? EvaluateExpression(Container exprContainer) {
     int startCallStackHeight = state.callStack.elements.length;
 
     state.callStack.push(PushPopType.Tunnel);
@@ -1587,7 +1587,7 @@ class Story extends RuntimeObject {
   /// </summary>
   bool allowExternalFunctionFallbacks = false;
 
-  void callExternalFunction(String funcName, int numberOfArguments) {
+  void CallExternalFunction(String funcName, int numberOfArguments) {
     ExternalFunctionDef? funcDef = _externals[funcName];
     Container? fallbackFunctionContainer;
 
@@ -1605,7 +1605,7 @@ class Story extends RuntimeObject {
     // Try to use fallback function?
     if (!foundExternal) {
       if (allowExternalFunctionFallbacks) {
-        fallbackFunctionContainer = knotContainerWithName(funcName);
+        fallbackFunctionContainer = KnotContainerWithName(funcName);
         Assert(
             fallbackFunctionContainer != null,
             "Trying to call EXTERNAL function '" +
@@ -1668,7 +1668,7 @@ class Story extends RuntimeObject {
   /// of the function will not change), then you can pass 'true'.
   /// Usually, you want to pass 'false', especially if you want some action
   /// to be performed in game code when this function is called.</param>
-  void bindExternalFunctionGeneral(String funcName, ExternalFunction func,
+  void BindExternalFunctionGeneral(String funcName, ExternalFunction func,
       [bool lookaheadSafe = false]) {
     Assert(!_externals.containsKey(funcName),
         "Function '" + funcName + "' has already been bound.");
@@ -1679,20 +1679,20 @@ class Story extends RuntimeObject {
   /// <summary>
   /// Remove a binding for a named EXTERNAL ink function.
   /// </summary>
-  void unbindExternalFunction(String funcName) {
+  void UnbindExternalFunction(String funcName) {
     Assert(_externals.containsKey(funcName),
         "Function '" + funcName + "' has not been bound.");
     _externals.remove(funcName);
   }
 
-  void variableStateDidChangeEvent(
+  void VariableStateDidChangeEvent(
       String variableName, RuntimeObject newValueObj) {}
 
   /// <summary>
   /// Get any global tags associated with the story. These are defined as
   /// hash tags defined at the very top of the story.
   /// </summary>
-  List<String> get globalTags => tagsAtStartOfFlowContainerWithPathString("");
+  List<String> get globalTags => TagsAtStartOfFlowContainerWithPathString("");
 
   /// <summary>
   /// Gets any tags associated with a particular knot or knot.stitch.
@@ -1700,15 +1700,15 @@ class Story extends RuntimeObject {
   /// knot or stitch.
   /// </summary>
   /// <param name="path">The path of the knot or stitch, in the form "knot" or "knot.stitch".</param>
-  List<String> tagsForContentAtPath(String path) {
-    return tagsAtStartOfFlowContainerWithPathString(path);
+  List<String> TagsForContentAtPath(String path) {
+    return TagsAtStartOfFlowContainerWithPathString(path);
   }
 
-  List<String> tagsAtStartOfFlowContainerWithPathString(String pathString) {
+  List<String> TagsAtStartOfFlowContainerWithPathString(String pathString) {
     var path = Path.new3(pathString);
 
     // Expected to be global story, knot or stitch
-    var flowContainer = contentAtPath(path).container;
+    var flowContainer = ContentAtPath(path).container;
     while (true) {
       var firstContent = flowContainer?.content[0];
       if (firstContent is Container) {
@@ -1740,7 +1740,7 @@ class Story extends RuntimeObject {
   /// It's only recommended that this is used on very short debug stories, since
   /// it can end up generate a large quantity of text otherwise.
   /// </summary>
-  String buildStringOfHierarchy() {
+  String BuildStringOfHierarchy() {
     var sb = StringBuilder();
 
     mainContentContainer.buildStringOfHierarchy3(
@@ -1749,7 +1749,7 @@ class Story extends RuntimeObject {
     return sb.toString();
   }
 
-  String buildStringOfContainer(Container container) {
+  String BuildStringOfContainer(Container container) {
     var sb = StringBuilder();
 
     container.buildStringOfHierarchy3(sb, 0, state.currentPointer.resolve());
@@ -1757,7 +1757,7 @@ class Story extends RuntimeObject {
     return sb.toString();
   }
 
-  void nextContent() {
+  void NextContent() {
     // Setting previousContentObject is critical for VisitChangedContainersDueToDivert
     state.previousPointer = state.currentPointer;
 
@@ -1767,7 +1767,7 @@ class Story extends RuntimeObject {
       state.divertedPointer = Pointer.Null;
 
       // Internally uses state.previousContentObject and state.currentContentObject
-      visitChangedContainersDueToDivert();
+      VisitChangedContainersDueToDivert();
 
       // Diverted location has valid content?
       if (!state.currentPointer.isNull) {
@@ -1780,7 +1780,7 @@ class Story extends RuntimeObject {
       // to the end of a container - e.g. a Conditional that's re-joining
     }
 
-    bool successfulPointerIncrement = incrementContentPointer();
+    bool successfulPointerIncrement = IncrementContentPointer();
 
     // Ran out of content? Try to auto-exit from a function,
     // or finish evaluating the content of a thread
@@ -1808,12 +1808,12 @@ class Story extends RuntimeObject {
 
       // Step past the point where we last called out
       if (didPop && !state.currentPointer.isNull) {
-        nextContent();
+        NextContent();
       }
     }
   }
 
-  bool incrementContentPointer() {
+  bool IncrementContentPointer() {
     bool successfulIncrement = true;
 
     var pointer = state.callStack.currentElement.currentPointer!;
@@ -1849,7 +1849,7 @@ class Story extends RuntimeObject {
     return successfulIncrement;
   }
 
-  bool tryFollowDefaultInvisibleChoice() {
+  bool TryFollowDefaultInvisibleChoice() {
     var allChoices = _state!.currentChoices;
 
     // Is a default invisible choice the ONLY choice?
@@ -1873,7 +1873,7 @@ class Story extends RuntimeObject {
       state.callStack.currentThread = state.callStack.forkThread();
     }
 
-    choosePath(choice.targetPath!, false);
+    ChoosePath(choice.targetPath!, false);
 
     return true;
   }
@@ -1881,10 +1881,10 @@ class Story extends RuntimeObject {
   // Note that this is O(n), since it re-evaluates the shuffle indices
   // from a consistent seed each time.
   // TODO: Is this the best algorithm it can be?
-  int nextSequenceShuffleIndex() {
+  int NextSequenceShuffleIndex() {
     var numElementsIntVal = state.PopEvaluationStack().tryCast<IntValue>();
     if (numElementsIntVal == null) {
-      error("expected number of elements in sequence for shuffle index");
+      Error("expected number of elements in sequence for shuffle index");
       return 0;
     }
 
@@ -1929,17 +1929,17 @@ class Story extends RuntimeObject {
 
   // Throw an exception that gets caught and causes AddError to be called,
   // then exits the flow.
-  void error(String message, [bool useEndLineNumber = false]) {
+  void Error(String message, [bool useEndLineNumber = false]) {
     var e = StoryException(message);
     e.useEndLineNumber = useEndLineNumber;
     throw e;
   }
 
-  void warning(String message) {
-    addError(message, true);
+  void Warning(String message) {
+    AddError(message, true);
   }
 
-  void addError(String message,
+  void AddError(String message,
       [bool isWarning = false, bool useEndLineNumber = false]) {
     var dm = currentDebugMetadata;
 

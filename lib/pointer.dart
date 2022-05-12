@@ -5,11 +5,11 @@ import 'addons/extra.dart';
 
 class Pointer extends Struct {
   Container? container;
-  int index = 0;
+  int index;
 
   Pointer({required this.container, required this.index});
 
-  RuntimeObject? resolve() {
+  RuntimeObject? Resolve() {
     if (index < 0) return container;
     if (container == null) return null;
     if (container!.content.isEmpty) return container;
@@ -24,7 +24,7 @@ class Pointer extends Struct {
 
     if (index >= 0) {
       return container!.path
-          .pathByAppendingComponent(PathComponent.new1(index));
+          .PathByAppendingComponent(PathComponent.new1(index));
     } else {
       return container!.path;
     }
@@ -36,7 +36,7 @@ class Pointer extends Struct {
     return "Ink Pointer -> " + container!.path.toString() + " -- index $index";
   }
 
-  static Pointer startOf(Container container) {
+  static Pointer StartOf(Container container) {
     return Pointer(container: container, index: 0);
   }
 

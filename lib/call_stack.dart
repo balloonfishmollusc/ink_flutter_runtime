@@ -115,7 +115,7 @@ class CallStackThread {
 
     if (!previousPointer!.isNull) {
       dict["previousContentObject"] =
-          previousPointer?.resolve()?.path.toString();
+          previousPointer?.Resolve()?.path.toString();
     }
 
     var elements = [];
@@ -170,7 +170,7 @@ class CallStack {
 
   static CallStack new1(Story storyContext) {
     var cs = CallStack._();
-    cs._startOfRoot = Pointer.startOf(storyContext.rootContentContainer!);
+    cs._startOfRoot = Pointer.StartOf(storyContext.rootContentContainer!);
     cs.reset();
     return cs;
   }
@@ -209,7 +209,7 @@ class CallStack {
     }
 
     _threadCounter = jObject["threadCounter"] as int;
-    _startOfRoot = Pointer.startOf(storyContext.rootContentContainer!);
+    _startOfRoot = Pointer.StartOf(storyContext.rootContentContainer!);
   }
 
   dynamic WriteJson() {

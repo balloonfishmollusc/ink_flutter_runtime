@@ -10,7 +10,7 @@ class Divert extends RuntimeObject {
   Path? get targetPath {
     // Resolve any relative paths to global ones as we come across them
     if (_targetPath != null && _targetPath!.isRelative) {
-      var targetObj = targetPointer.resolve();
+      var targetObj = targetPointer.Resolve();
       if (targetObj != null) {
         _targetPath = targetObj.path;
       }
@@ -31,7 +31,7 @@ class Divert extends RuntimeObject {
         _targetPointer!.container = targetObj!.parent as Container;
         _targetPointer!.index = _targetPath!.lastComponent!.index;
       } else {
-        _targetPointer = Pointer.startOf(targetObj as Container);
+        _targetPointer = Pointer.StartOf(targetObj as Container);
       }
     }
     return _targetPointer!.clone() as Pointer;

@@ -729,7 +729,7 @@ class Story extends RuntimeObject {
     }
 
     // Step directly to the first element of content in a container (if necessary)
-    Container? containerToEnter = tryCast<Container>(pointer.resolve());
+    Container? containerToEnter = tryCast<Container>(pointer.Resolve());
     while (containerToEnter != null) {
       // Mark container as being entered
       VisitContainer(containerToEnter, true);
@@ -739,8 +739,8 @@ class Story extends RuntimeObject {
         break;
       }
 
-      pointer = Pointer.startOf(containerToEnter);
-      containerToEnter = tryCast<Container>(pointer.resolve());
+      pointer = Pointer.StartOf(containerToEnter);
+      containerToEnter = tryCast<Container>(pointer.Resolve());
     }
     state.currentPointer = pointer;
 
@@ -753,7 +753,7 @@ class Story extends RuntimeObject {
     //  - Or a logic/flow statement - if so, do it
     // Stop flow if we hit a stack pop when we're unable to pop (e.g. return/done statement in knot
     // that was diverted to rather than called as a function)
-    var currentContentObj = pointer.resolve();
+    var currentContentObj = pointer.Resolve();
     bool isLogicOrFlowControl = PerformLogicAndFlowControl(currentContentObj!);
 
     // Has flow been forced to end by flow control above?
@@ -846,7 +846,7 @@ class Story extends RuntimeObject {
     // First, find the previously open set of containers
     _prevContainers.clear();
     if (!previousPointer!.isNull) {
-      Container? prevAncestor = tryCast<Container>(previousPointer.resolve()) ??
+      Container? prevAncestor = tryCast<Container>(previousPointer.Resolve()) ??
           previousPointer.container as Container;
       while (prevAncestor != null) {
         _prevContainers.add(prevAncestor);
@@ -856,7 +856,7 @@ class Story extends RuntimeObject {
 
     // If the dynamic is a container itself, it will be visited automatically at the next actual
     // content step. However, we need to walk up the ancestry to see if there are more containers
-    RuntimeObject? currentChildOfContainer = pointer.resolve();
+    RuntimeObject? currentChildOfContainer = pointer.Resolve();
 
     // Invalid pointer? May happen if attemptingto
     if (currentChildOfContainer == null) return;
@@ -1617,7 +1617,7 @@ class Story extends RuntimeObject {
         // Divert direct into fallback function and we're done
         state.callStack.push(PushPopType.Function,
             outputStreamLengthWithPushed: state.outputStream.length);
-        state.divertedPointer = Pointer.startOf(fallbackFunctionContainer!);
+        state.divertedPointer = Pointer.StartOf(fallbackFunctionContainer!);
         return;
       } else {
         Assert(
@@ -1746,7 +1746,7 @@ class Story extends RuntimeObject {
     var sb = StringBuilder();
 
     mainContentContainer.buildStringOfHierarchy3(
-        sb, 0, state.currentPointer.resolve());
+        sb, 0, state.currentPointer.Resolve());
 
     return sb.toString();
   }
@@ -1754,7 +1754,7 @@ class Story extends RuntimeObject {
   String BuildStringOfContainer(Container container) {
     var sb = StringBuilder();
 
-    container.buildStringOfHierarchy3(sb, 0, state.currentPointer.resolve());
+    container.buildStringOfHierarchy3(sb, 0, state.currentPointer.Resolve());
 
     return sb.toString();
   }
@@ -1979,7 +1979,7 @@ class Story extends RuntimeObject {
     // Try to get from the current path first
     var pointer = state.currentPointer;
     if (!pointer.isNull) {
-      dm = pointer.resolve()!.debugMetadata;
+      dm = pointer.Resolve()!.debugMetadata;
       if (dm != null) {
         return dm;
       }
@@ -1988,8 +1988,8 @@ class Story extends RuntimeObject {
     // Move up callstack if possible
     for (int i = state.callStack.elements.length - 1; i >= 0; --i) {
       pointer = state.callStack.elements[i].currentPointer!;
-      if (!pointer.isNull && pointer.resolve() != null) {
-        dm = pointer.resolve()!.debugMetadata;
+      if (!pointer.isNull && pointer.Resolve() != null) {
+        dm = pointer.Resolve()!.debugMetadata;
         if (dm != null) {
           return dm;
         }

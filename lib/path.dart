@@ -109,7 +109,7 @@ class Path {
     return p;
   }
 
-  Path pathByAppendingComponent(PathComponent c) {
+  Path PathByAppendingComponent(PathComponent c) {
     Path p = Path();
     p._components.addAll(_components);
     p._components.add(c);

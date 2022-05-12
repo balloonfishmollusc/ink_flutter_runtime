@@ -340,7 +340,7 @@ class StoryState {
 
   void GoToStart() {
     callStack.currentElement.currentPointer =
-        Pointer.startOf(story.mainContentContainer);
+        Pointer.StartOf(story.mainContentContainer);
   }
 
   void SwitchFlow_Internal(String? flowName) {
@@ -1056,7 +1056,7 @@ class StoryState {
       Container funcContainer, List? arguments) {
     callStack.push(PushPopType.FunctionEvaluationFromGame,
         externalEvaluationStackHeight: evaluationStack.length);
-    callStack.currentElement.currentPointer = Pointer.startOf(funcContainer);
+    callStack.currentElement.currentPointer = Pointer.StartOf(funcContainer);
 
     PassArgumentsToEvaluationStack(arguments);
   }

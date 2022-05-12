@@ -1,3 +1,5 @@
+// reviewed
+
 import 'call_stack.dart';
 import 'choice.dart';
 import 'json_serialisation.dart';
@@ -15,25 +17,23 @@ class Flow {
 
     if (jObject == null) return;
 
-    callStack.setJsonToken(jObject["callstack"], story);
+    callStack.SetJsonToken(jObject["callstack"], story);
     outputStream = Json.JArrayToRuntimeObjList(jObject["outputStream"]);
     currentChoices =
         Json.JArrayToRuntimeObjList<Choice>(jObject["currentChoices"]);
 
-    // choiceThreads is optional
-    dynamic jChoiceThreadsObj = jObject["choiceThreads"];
-    LoadFlowChoiceThreads(jChoiceThreadsObj, story);
+    Map jChoiceThreadsObj = jObject["choiceThreads"];
+    // jObject["choiceThreads"] may be a Map<int, dynamic>
+    // we use .cast() to ensure it works
+    LoadFlowChoiceThreads(jChoiceThreadsObj.cast(), story);
   }
 
-  dynamic writeJson() {
+  dynamic WriteJson() {
     var dict = <String, dynamic>{};
 
-    dict["callstack"] = callStack.writeJson();
+    dict["callstack"] = callStack.WriteJson();
     dict["outputStream"] = Json.WriteListRuntimeObjs(outputStream);
 
-    // choiceThreads: optional
-    // Has to come BEFORE the choices themselves are written out
-    // since the originalThreadIndex of each choice needs to be set
     bool hasChoiceThreads = false;
     for (Choice c in currentChoices) {
       c.originalThreadIndex = c.threadAtGeneration!.threadIndex;
@@ -45,7 +45,7 @@ class Flow {
         }
 
         dict["choiceThreads"][c.originalThreadIndex] =
-            c.threadAtGeneration?.writeJson();
+            c.threadAtGeneration!.WriteJson();
       }
     }
 
@@ -66,7 +66,7 @@ class Flow {
       var foundActiveThread =
           callStack.ThreadWithIndex(choice.originalThreadIndex);
       if (foundActiveThread != null) {
-        choice.threadAtGeneration = foundActiveThread.copy();
+        choice.threadAtGeneration = foundActiveThread.Copy();
       } else {
         Map<String, dynamic> jSavedChoiceThread =
             jChoiceThreads[choice.originalThreadIndex.toString()];

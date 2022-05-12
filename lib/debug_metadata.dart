@@ -1,3 +1,5 @@
+// reviewed
+
 import 'dart:math';
 
 class DebugMetadata {
@@ -8,10 +10,9 @@ class DebugMetadata {
   String? fileName;
   String? sourceName;
 
-  DebugMetadata merge(DebugMetadata dm) {
+  DebugMetadata Merge(DebugMetadata dm) {
     var newDebugMetadata = DebugMetadata();
 
-    // These are not supposed to be differ between 'this' and 'dm'.
     newDebugMetadata.fileName = fileName;
     newDebugMetadata.sourceName = sourceName;
 

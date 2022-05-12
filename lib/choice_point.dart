@@ -1,3 +1,5 @@
+// reviewed
+
 import 'container.dart';
 import 'runtime_object.dart';
 import 'path.dart';
@@ -13,19 +15,14 @@ class ChoicePoint extends RuntimeObject {
     return _pathOnChoice;
   }
 
-  set pathOnChoice(Path? value) {
-    _pathOnChoice = value;
-  }
-
   Path? _pathOnChoice;
 
   Container? get choiceTarget {
-    if (_pathOnChoice == null) return null;
     return ResolvePath(_pathOnChoice!).container;
   }
 
   String get pathStringOnChoice => CompactPathString(pathOnChoice!);
-  set pathStringOnChoice(String value) => pathOnChoice = Path.new3(value);
+  set pathStringOnChoice(String value) => _pathOnChoice = Path.new3(value);
 
   bool hasCondition = false;
   bool hasStartContent = false;

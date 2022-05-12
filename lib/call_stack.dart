@@ -39,7 +39,7 @@ class CallStackThread {
   int threadIndex = 0;
   Pointer? previousPointer;
 
-  CallStackThread copy() {
+  CallStackThread Copy() {
     var copy = CallStackThread.new0();
     copy.threadIndex = threadIndex;
     for (var e in callstack) {
@@ -109,7 +109,7 @@ class CallStackThread {
     }
   }
 
-  dynamic writeJson() {
+  dynamic WriteJson() {
     var dict = <String, dynamic>{};
     dict["threadIndex"] = threadIndex;
 
@@ -123,7 +123,7 @@ class CallStackThread {
       var item = <String, dynamic>{};
 
       if (!el.currentPointer!.isNull) {
-        item["cPath"] = el.currentPointer!.container!.path!.componentsString;
+        item["cPath"] = el.currentPointer!.container!.path.componentsString;
         item["idx"] = el.currentPointer!.index;
       }
 
@@ -178,7 +178,7 @@ class CallStack {
   static CallStack new2(CallStack toCopy) {
     var cs = CallStack._();
     for (var otherThread in toCopy._threads) {
-      cs._threads.add(otherThread.copy());
+      cs._threads.add(otherThread.Copy());
     }
     cs._threadCounter = toCopy._threadCounter;
     cs._startOfRoot = toCopy._startOfRoot;
@@ -197,7 +197,7 @@ class CallStack {
   // Unfortunately it's not possible to implement jsonToken since
   // the setter needs to take a Story as a context in order to
   // look up objects from paths for currentContainer within elements.
-  void setJsonToken(Map<String, dynamic> jObject, Story storyContext) {
+  void SetJsonToken(Map<String, dynamic> jObject, Story storyContext) {
     _threads.clear();
 
     var jThreads = jObject["threads"] as List;
@@ -212,10 +212,10 @@ class CallStack {
     _startOfRoot = Pointer.startOf(storyContext.rootContentContainer!);
   }
 
-  dynamic writeJson() {
+  dynamic WriteJson() {
     List<dynamic> threads = [];
     for (CallStackThread thread in _threads) {
-      threads.add(thread.writeJson());
+      threads.add(thread.WriteJson());
     }
 
     return <String, dynamic>{
@@ -225,14 +225,14 @@ class CallStack {
   }
 
   void pushThread() {
-    var newThread = currentThread.copy();
+    var newThread = currentThread.Copy();
     _threadCounter++;
     newThread.threadIndex = _threadCounter;
     _threads.add(newThread);
   }
 
   CallStackThread forkThread() {
-    var forkedThread = currentThread.copy();
+    var forkedThread = currentThread.Copy();
     _threadCounter++;
     forkedThread.threadIndex = _threadCounter;
     return forkedThread;

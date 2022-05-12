@@ -74,14 +74,11 @@ class RuntimeObject {
   }
 
   Path? _path;
-  Path? get path {
+  Path get path {
     if (_path == null) {
       if (parent == null) {
         _path = Path();
       } else {
-        // Maintain a Stack so that the order of the components
-        // is reversed when they're added to the Path.
-        // We're iterating up the hierarchy from the leaves/children to the root.
         var comps = Stack<PathComponent>();
 
         RuntimeObject child = this;
@@ -105,7 +102,7 @@ class RuntimeObject {
       }
     }
 
-    return _path;
+    return _path!;
   }
 
   SearchResult ResolvePath(Path path) {
@@ -132,7 +129,7 @@ class RuntimeObject {
     // 2. Drill up using ".." style (actually represented as "^")
     // 3. Re-build downward chain from common ancestor
 
-    var ownPath = path!;
+    var ownPath = path;
 
     int minPathLength = min(globalPath.length, ownPath.length);
     int lastSharedPathCompIndex = -1;
@@ -174,7 +171,7 @@ class RuntimeObject {
     String? relativePathStr;
     if (otherPath.isRelative) {
       relativePathStr = otherPath.componentsString;
-      globalPathStr = path!.pathByAppendingPath(otherPath).componentsString;
+      globalPathStr = path.pathByAppendingPath(otherPath).componentsString;
     } else {
       var relativePath = ConvertPathToRelative(otherPath);
       relativePathStr = relativePath.componentsString;

@@ -93,7 +93,7 @@ class Container extends RuntimeObject implements INamedContent {
 
   Path? get pathToFirstLeafContent {
     _pathToFirstLeafContent ??=
-        path?.pathByAppendingPath(internalPathToFirstLeafContent!);
+        path.pathByAppendingPath(internalPathToFirstLeafContent!);
     return _pathToFirstLeafContent;
   }
 

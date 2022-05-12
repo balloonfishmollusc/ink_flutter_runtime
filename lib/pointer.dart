@@ -22,11 +22,12 @@ class Pointer extends Struct {
   Path? get path {
     if (isNull) return null;
 
-    if (index >= 0)
+    if (index >= 0) {
       return container!.path
-          ?.pathByAppendingComponent(PathComponent.new1(index));
-    else
+          .pathByAppendingComponent(PathComponent.new1(index));
+    } else {
       return container!.path;
+    }
   }
 
   @override

@@ -497,13 +497,13 @@ class StoryState {
     // Multi-flow
     if (_namedFlows != null) {
       for (var namedFlow in _namedFlows!.entries) {
-        dict["flows"][namedFlow.key] = namedFlow.value.writeJson();
+        dict["flows"][namedFlow.key] = namedFlow.value.WriteJson();
       }
     }
 
     // Single flow
     else {
-      dict["flows"][_currentFlow.name] = _currentFlow.writeJson();
+      dict["flows"][_currentFlow.name] = _currentFlow.WriteJson();
     }
 
     dict["currentFlowName"] = _currentFlow.name;
@@ -580,7 +580,7 @@ class StoryState {
     else {
       _namedFlows = null;
       _currentFlow.name = kDefaultFlowName;
-      _currentFlow.callStack.setJsonToken(
+      _currentFlow.callStack.SetJsonToken(
           jObject["callstackThreads"] as Map<String, dynamic>, story);
       _currentFlow.outputStream =
           Json.JArrayToRuntimeObjList(jObject["outputStream"] as List<dynamic>);

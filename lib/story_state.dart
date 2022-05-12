@@ -344,8 +344,9 @@ class StoryState {
   }
 
   void SwitchFlow_Internal(String? flowName) {
-    if (flowName == null)
+    if (flowName == null) {
       throw Exception("Must pass a non-null String to Story.SwitchFlow");
+    }
 
     if (_namedFlows == null) {
       _namedFlows = <String, Flow>{};
@@ -377,8 +378,9 @@ class StoryState {
   }
 
   void RemoveFlow_Internal(String flowName) {
-    if (flowName == kDefaultFlowName)
+    if (flowName == kDefaultFlowName) {
       throw Exception("Cannot destroy default flow");
+    }
 
     // If we're currently in the flow that's being removed, switch back to default
     if (_currentFlow.name == flowName) {

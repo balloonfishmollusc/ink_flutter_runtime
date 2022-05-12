@@ -277,8 +277,9 @@ class VariablesState extends Iterable<String> {
   VariablePointerValue ResolveVariablePointer(VariablePointerValue varPointer) {
     int contextIndex = varPointer.contextIndex;
 
-    if (contextIndex == -1)
+    if (contextIndex == -1) {
       contextIndex = GetContextIndexOfVariableNamed(varPointer.variableName!);
+    }
 
     var valueOfVariablePointedTo =
         GetRawVariableWithName(varPointer.variableName!, contextIndex);

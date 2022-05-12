@@ -65,20 +65,22 @@ class Json {
     var divert = tryCast<Divert>(obj);
     if (divert != null) {
       String divTypeKey = "->";
-      if (divert.isExternal)
+      if (divert.isExternal) {
         divTypeKey = "x()";
-      else if (divert.pushesToStack) {
-        if (divert.stackPushType == PushPopType.Function)
+      } else if (divert.pushesToStack) {
+        if (divert.stackPushType == PushPopType.Function) {
           divTypeKey = "f()";
-        else if (divert.stackPushType == PushPopType.Tunnel)
+        } else if (divert.stackPushType == PushPopType.Tunnel) {
           divTypeKey = "->t->";
+        }
       }
 
       String? targetStr;
-      if (divert.hasVariableTarget)
+      if (divert.hasVariableTarget) {
         targetStr = divert.variableDivertName;
-      else
+      } else {
         targetStr = divert.targetPathString;
+      }
 
       var dict = <String, dynamic>{};
       dict[divTypeKey] = targetStr;
@@ -117,9 +119,9 @@ class Json {
 
     var strVal = tryCast<StringValue>(obj);
     if (strVal != null) {
-      if (strVal.isNewline)
+      if (strVal.isNewline) {
         return "\n";
-      else {
+      } else {
         return "^" + strVal.value;
       }
     }
@@ -285,9 +287,11 @@ class Json {
 
       // String value
       var firstChar = str[0];
-      if (firstChar == '^')
+      if (firstChar == '^') {
         return StringValue(str.substring(1));
-      else if (firstChar == '\n' && str.length == 1) return StringValue("\n");
+      } else if (firstChar == '\n' && str.length == 1) {
+        return StringValue("\n");
+      }
 
       // Glue
       if (str == "<>") return Glue();
@@ -306,13 +310,16 @@ class Json {
       // we know it's not a string, we can convert back to the proper
       // symbol for the operator.
       if (str == "L^") str = "^";
-      if (NativeFunctionCall.callExistsWithName(str))
+      if (NativeFunctionCall.callExistsWithName(str)) {
         return NativeFunctionCall.callWithName(str);
+      }
 
       // Pop
-      if (str == "->->")
+      if (str == "->->") {
         return ControlCommand(CommandType.PopTunnel);
-      else if (str == "~ret") return ControlCommand(CommandType.PopFunction);
+      } else if (str == "~ret") {
+        return ControlCommand(CommandType.PopFunction);
+      }
 
       // Void
       if (str == "void") return Void();
@@ -324,8 +331,9 @@ class Json {
 
       // Divert target value to path
       propValue = obj["^->"];
-      if (propValue != null)
+      if (propValue != null) {
         return DivertTargetValue(Path.new3(propValue as String));
+      }
 
       // VariablePointerValue
       propValue = obj["^var"];
@@ -384,10 +392,11 @@ class Json {
         String target = propValue.ToString();
 
         propValue = obj["var"];
-        if (propValue != null)
+        if (propValue != null) {
           divert.variableDivertName = target;
-        else
+        } else {
           divert.targetPathString = target;
+        }
 
         propValue = obj["c"];
         divert.isConditional = propValue != null;
@@ -474,7 +483,9 @@ class Json {
       [bool withoutName = false]) {
     List<dynamic> ret = [];
 
-    for (var c in container.content) ret.add(WriteRuntimeObject(c));
+    for (var c in container.content) {
+      ret.add(WriteRuntimeObject(c));
+    }
 
     // Container is always an array [...]
     // But the final element is always either:
@@ -504,10 +515,11 @@ class Json {
 
     if (hasNameProperty) dict["#n"] = container.name;
 
-    if (hasTerminator)
+    if (hasTerminator) {
       ret.add(dict);
-    else
+    } else {
       ret.add(null);
+    }
 
     return ret;
   }

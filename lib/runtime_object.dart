@@ -178,10 +178,11 @@ class RuntimeObject {
       globalPathStr = otherPath.componentsString;
     }
 
-    if (relativePathStr.length < globalPathStr.length)
+    if (relativePathStr.length < globalPathStr.length) {
       return relativePathStr;
-    else
+    } else {
       return globalPathStr;
+    }
   }
 
   Container? get rootContentContainer {

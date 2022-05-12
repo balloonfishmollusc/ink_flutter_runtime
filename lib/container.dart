@@ -188,7 +188,7 @@ class Container extends RuntimeObject implements INamedContent {
     }
   }
 
-  SearchResult contentAtPath(Path path,
+  SearchResult ContentAtPath(Path path,
       {int partialPathStart = 0, int partialPathLength = -1}) {
     if (partialPathLength == -1) partialPathLength = path.length;
 

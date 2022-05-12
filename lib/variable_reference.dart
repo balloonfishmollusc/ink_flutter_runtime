@@ -1,29 +1,29 @@
+// reviewed
+
 import 'container.dart';
 import 'runtime_object.dart';
 import 'path.dart';
 
 class VariableReference extends RuntimeObject {
-  // Normal named variable
   String? name;
 
-  // Variable reference is actually a path for a visit (read) count
   Path? pathForCount;
 
   Container? get containerForCount {
-    if (pathForCount == null) return null;
-    return resolvePath(pathForCount!).container;
+    return ResolvePath(pathForCount!).container;
   }
 
   String? get pathStringForCount {
     if (pathForCount == null) return null;
-    return compactPathString(pathForCount!);
+    return CompactPathString(pathForCount!);
   }
 
   set pathStringForCount(String? value) {
-    if (value == null)
+    if (value == null) {
       pathForCount = null;
-    else
+    } else {
       pathForCount = Path.new3(value);
+    }
   }
 
   VariableReference([this.name]);

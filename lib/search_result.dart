@@ -1,3 +1,5 @@
+// reviewed
+
 import 'runtime_object.dart';
 import 'container.dart';
 import 'addons/extra.dart';
@@ -12,7 +14,7 @@ class SearchResult extends Struct {
   RuntimeObject? obj;
   bool approximate = false;
   RuntimeObject? get correctObj => approximate ? null : obj;
-  Container? get container => tryCast<Container>(obj);
+  Container? get container => obj?.tryCast<Container>();
 
   @override
   Struct clone() {

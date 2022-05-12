@@ -4,7 +4,6 @@ import 'path.dart';
 
 class ChoicePoint extends RuntimeObject {
   Path? get pathOnChoice {
-    // Resolve any relative paths to global ones as we come across them
     if (_pathOnChoice != null && _pathOnChoice!.isRelative) {
       var choiceTargetObj = choiceTarget;
       if (choiceTargetObj != null) {
@@ -22,10 +21,10 @@ class ChoicePoint extends RuntimeObject {
 
   Container? get choiceTarget {
     if (_pathOnChoice == null) return null;
-    return resolvePath(_pathOnChoice!).container;
+    return ResolvePath(_pathOnChoice!).container;
   }
 
-  String get pathStringOnChoice => compactPathString(pathOnChoice!);
+  String get pathStringOnChoice => CompactPathString(pathOnChoice!);
   set pathStringOnChoice(String value) => pathOnChoice = Path.new3(value);
 
   bool hasCondition = false;

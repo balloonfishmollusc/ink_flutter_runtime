@@ -61,7 +61,7 @@ class RuntimeObject {
     // Try to get a line number from debug metadata
     var root = rootContentContainer;
     if (root != null) {
-      RuntimeObject? targetContent = root.contentAtPath(path).obj;
+      RuntimeObject? targetContent = root.ContentAtPath(path).obj;
       if (targetContent != null) {
         var dm = targetContent.debugMetadata;
         if (dm != null) {
@@ -108,27 +108,26 @@ class RuntimeObject {
     return _path;
   }
 
-  SearchResult resolvePath(Path path) {
+  SearchResult ResolvePath(Path path) {
     if (path.isRelative) {
-      Container? nearestContainer;
-      if (this is Container) nearestContainer = this as Container;
+      Container? nearestContainer = tryCast<Container>();
       if (nearestContainer == null) {
         assert(parent != null,
             "Can't resolve relative path because we don't have a parent");
 
-        nearestContainer = (parent is Container) ? (parent as Container) : null;
+        nearestContainer = parent!.tryCast<Container>();
         assert(nearestContainer != null, "Expected parent to be a container");
         assert(path.getComponent(0)!.isParent);
         path = path.tail;
       }
 
-      return nearestContainer!.contentAtPath(path);
+      return nearestContainer!.ContentAtPath(path);
     } else {
-      return rootContentContainer!.contentAtPath(path);
+      return rootContentContainer!.ContentAtPath(path);
     }
   }
 
-  Path convertPathToRelative(Path globalPath) {
+  Path ConvertPathToRelative(Path globalPath) {
     // 1. Find last shared ancestor
     // 2. Drill up using ".." style (actually represented as "^")
     // 3. Re-build downward chain from common ancestor
@@ -170,14 +169,14 @@ class RuntimeObject {
     return relativePath;
   }
 
-  String compactPathString(Path otherPath) {
+  String CompactPathString(Path otherPath) {
     String? globalPathStr;
     String? relativePathStr;
     if (otherPath.isRelative) {
       relativePathStr = otherPath.componentsString;
       globalPathStr = path!.pathByAppendingPath(otherPath).componentsString;
     } else {
-      var relativePath = convertPathToRelative(otherPath);
+      var relativePath = ConvertPathToRelative(otherPath);
       relativePathStr = relativePath.componentsString;
       globalPathStr = otherPath.componentsString;
     }

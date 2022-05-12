@@ -25,7 +25,7 @@ class Divert extends RuntimeObject {
 
   Pointer get targetPointer {
     if (_targetPointer!.isNull) {
-      var targetObj = resolvePath(_targetPath!).obj;
+      var targetObj = ResolvePath(_targetPath!).obj;
 
       if (_targetPath!.lastComponent!.isIndex) {
         _targetPointer!.container = targetObj!.parent as Container;
@@ -42,7 +42,7 @@ class Divert extends RuntimeObject {
   String? get targetPathString {
     if (targetPath == null) return null;
 
-    return compactPathString(targetPath!);
+    return CompactPathString(targetPath!);
   }
 
   set targetPathString(String? value) {

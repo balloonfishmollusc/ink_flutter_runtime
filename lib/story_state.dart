@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'addons/extra.dart';
 import 'call_stack.dart';
@@ -11,7 +12,6 @@ import 'path.dart';
 import 'pointer.dart';
 import 'push_pop.dart';
 import 'runtime_object.dart';
-import 'simple_json.dart';
 import 'state_patch.dart';
 import 'story.dart';
 import 'tag.dart';
@@ -37,7 +37,7 @@ class StoryState {
   /// </summary>
   /// <returns>The save state in json format.</returns>
   String ToJson() {
-    return SimpleJson.serialize(WriteJson() as Map<String, dynamic>);
+    return jsonEncode(WriteJson() as Map<String, dynamic>);
   }
 
   /// <summary>
@@ -45,7 +45,7 @@ class StoryState {
   /// </summary>
   /// <param name="json">The JSON String to load.</param>
   void LoadJson(String json) {
-    var jObject = SimpleJson.textToDictionary(json);
+    var jObject = jsonDecode(json);
     LoadJsonObj(jObject);
     onDidLoadState.fire();
   }
@@ -102,7 +102,7 @@ class StoryState {
     if (_patch != null) {
       var currCount = VisitCountForContainer(container);
       currCount++;
-      _patch!.setVisitCount(container, currCount);
+      _patch!.visitCounts[container] = currCount;
       return;
     }
 
@@ -115,7 +115,7 @@ class StoryState {
 
   void RecordTurnIndexVisitToContainer(Container container) {
     if (_patch != null) {
-      _patch!.setTurnIndex(container, currentTurnIndex);
+      _patch!.turnIndices[container] = currentTurnIndex;
       return;
     }
 

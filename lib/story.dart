@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:ink_flutter_runtime/choice_point.dart';
@@ -17,7 +18,6 @@ import 'pointer.dart';
 import 'push_pop.dart';
 import 'runtime_object.dart';
 import 'search_result.dart';
-import 'simple_json.dart';
 import 'story_exception.dart';
 import 'story_state.dart';
 import 'tag.dart';
@@ -186,7 +186,7 @@ class Story extends RuntimeObject {
   /// Construct a Story dynamic using a JSON String compiled through inklecate.
   /// </summary>
   Story(String jsonString) {
-    Map<String, dynamic> rootObject = SimpleJson.textToDictionary(jsonString);
+    Map<String, dynamic> rootObject = jsonDecode(jsonString);
 
     dynamic versionObj = rootObject["inkVersion"];
     if (versionObj == null) {
@@ -219,9 +219,11 @@ class Story extends RuntimeObject {
 
   String ToJson() {
     var dict = <String, dynamic>{};
+    dict["cInkVersion"] = "1.0.0";
     dict["inkVersion"] = inkVersionCurrent;
     dict["root"] = Json.WriteRuntimeContainer(_mainContentContainer);
-    return SimpleJson.serialize(dict);
+    dict["listDefs"] = {};
+    return jsonEncode(dict);
   }
 
   /// <summary>
@@ -586,7 +588,7 @@ class Story extends RuntimeObject {
   }
 
   SearchResult ContentAtPath(Path path) {
-    return mainContentContainer.contentAtPath(path);
+    return mainContentContainer.ContentAtPath(path);
   }
 
   Container? KnotContainerWithName(String name) {
@@ -610,12 +612,12 @@ class Story extends RuntimeObject {
     SearchResult result;
     if (path.lastComponent!.isIndex) {
       pathLengthToUse = path.length - 1;
-      result = mainContentContainer.contentAtPath(path,
+      result = mainContentContainer.ContentAtPath(path,
           partialPathLength: pathLengthToUse);
       p = Pointer(
           container: result.container, index: path.lastComponent!.index);
     } else {
-      result = mainContentContainer.contentAtPath(path);
+      result = mainContentContainer.ContentAtPath(path);
       p = Pointer(container: result.container, index: -1);
     }
 

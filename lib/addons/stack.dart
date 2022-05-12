@@ -1,3 +1,5 @@
+// reviewed
+
 class Stack<T> extends Iterable<T> {
   final List<T> _list = [];
 

@@ -253,7 +253,7 @@ class VariablesState extends Iterable<String> {
     }
 
     if (patch != null) {
-      patch!.setGlobal(variableName, value);
+      patch!.globals[variableName] = value;
     } else {
       _globalVariables[variableName] = value;
     }
@@ -261,7 +261,7 @@ class VariablesState extends Iterable<String> {
     if (variableChangedEvent.isNotEmpty && !(value == oldValue)) {
       if (batchObservingVariableChanges) {
         if (patch != null) {
-          patch!.addChangedVariable(variableName);
+          patch!.changedVariables.add(variableName);
         } else if (_changedVariablesForBatchObs != null) {
           _changedVariablesForBatchObs!.add(variableName);
         }

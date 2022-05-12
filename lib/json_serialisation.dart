@@ -57,7 +57,7 @@ class Json {
   }
 
   static dynamic WriteRuntimeObject(RuntimeObject? obj) {
-    var container = tryCast<Container>(obj);
+    var container = obj?.tryCast<Container>();
     if (container != null) {
       return WriteRuntimeContainer(container);
     }

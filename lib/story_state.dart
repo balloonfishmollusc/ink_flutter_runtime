@@ -194,15 +194,15 @@ class StoryState {
     }
   }
 
-  Pointer get currentPointer => callStack.currentElement.currentPointer!;
+  Pointer get currentPointer => callStack.currentElement.currentPointer;
 
-  set currentPointer(Pointer? value) {
+  set currentPointer(Pointer value) {
     callStack.currentElement.currentPointer = value;
   }
 
-  Pointer? get previousPointer => callStack.currentThread.previousPointer;
+  Pointer get previousPointer => callStack.currentThread.previousPointer;
 
-  set previousPointer(Pointer? value) {
+  set previousPointer(Pointer value) {
     callStack.currentThread.previousPointer = value;
   }
 
@@ -985,7 +985,7 @@ class StoryState {
   /// Calling this is equivalent to calling -> END in ink.
   /// </summary>
   void ForceEnd() {
-    callStack.reset();
+    callStack.Reset();
 
     _currentFlow.currentChoices.clear();
 
@@ -1034,7 +1034,7 @@ class StoryState {
       TrimWhitespaceFromFunctionEnd();
     }
 
-    callStack.pop(popType);
+    callStack.Pop(popType);
   }
 
   // Don't make since the method need to be wrapped in Story for visit counting
@@ -1056,7 +1056,7 @@ class StoryState {
 
   void StartFunctionEvaluationFromGame(
       Container funcContainer, List? arguments) {
-    callStack.push(PushPopType.FunctionEvaluationFromGame,
+    callStack.Push(PushPopType.FunctionEvaluationFromGame,
         externalEvaluationStackHeight: evaluationStack.length);
     callStack.currentElement.currentPointer = Pointer.StartOf(funcContainer);
 

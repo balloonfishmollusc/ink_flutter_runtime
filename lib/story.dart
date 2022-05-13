@@ -372,10 +372,10 @@ class Story extends RuntimeObject {
         if (state.generatedChoices.isEmpty &&
             !state.didSafeExit &&
             _temporaryEvaluationContainer == null) {
-          if (state.callStack.canPopType(PushPopType.Tunnel)) {
+          if (state.callStack.CanPop(PushPopType.Tunnel)) {
             AddError(
                 "unexpectedly reached end of content. Do you need a '->->' to return from a tunnel?");
-          } else if (state.callStack.canPopType(PushPopType.Function)) {
+          } else if (state.callStack.CanPop(PushPopType.Function)) {
             AddError(
                 "unexpectedly reached end of content. Do you need a '~ return'?");
           } else if (!state.callStack.canPop) {
@@ -792,7 +792,7 @@ class Story extends RuntimeObject {
       if (varPointer != null && varPointer.contextIndex == -1) {
         // Create dynamic so we're not overwriting the story's own data
         var contextIdx =
-            state.callStack.contextForVariableNamed(varPointer.variableName!);
+            state.callStack.ContextForVariableNamed(varPointer.variableName!);
         currentContentObj =
             VariablePointerValue(varPointer.variableName, contextIdx);
       }
@@ -815,7 +815,7 @@ class Story extends RuntimeObject {
     var controlCmd = currentContentObj?.csAs<ControlCommand>();
     if (controlCmd != null &&
         controlCmd.commandType == CommandType.StartThread) {
-      state.callStack.pushThread();
+      state.callStack.PushThread();
     }
   }
 
@@ -845,7 +845,7 @@ class Story extends RuntimeObject {
 
     // First, find the previously open set of containers
     _prevContainers.clear();
-    if (!previousPointer!.isNull) {
+    if (!previousPointer.isNull) {
       Container? prevAncestor = previousPointer.Resolve()?.csAs<Container>() ??
           previousPointer.container as Container;
       while (prevAncestor != null) {
@@ -940,7 +940,7 @@ class Story extends RuntimeObject {
     // at which point that thread is discarded.
     // Fork clones the thread, gives it a ID, but without affecting
     // the thread stack itself.
-    choice.threadAtGeneration = state.callStack.forkThread();
+    choice.threadAtGeneration = state.callStack.ForkThread();
 
     // Set final text for the choice
     choice.text = (startText + choiceOnlyText).trim();
@@ -1026,7 +1026,7 @@ class Story extends RuntimeObject {
       }
 
       if (currentDivert.pushesToStack) {
-        state.callStack.push(currentDivert.stackPushType,
+        state.callStack.Push(currentDivert.stackPushType,
             outputStreamLengthWithPushed: state.outputStream.length);
       }
 
@@ -1303,7 +1303,7 @@ class Story extends RuntimeObject {
           // act of creating the thread, or in the context of
           // evaluating the content.
           if (state.callStack.canPopThread) {
-            state.callStack.popThread();
+            state.callStack.PopThread();
           }
 
           // In normal flow - allow safe exit without warning
@@ -1429,8 +1429,7 @@ class Story extends RuntimeObject {
       // pretty much in any state. Let's catch one of the worst offenders.
       if (state.callStack.currentElement.type == PushPopType.Function) {
         String funcDetail = "";
-        var container =
-            state.callStack.currentElement.currentPointer!.container;
+        var container = state.callStack.currentElement.currentPointer.container;
         if (container != null) {
           funcDetail = "(" + container.path.toString() + ") ";
         }
@@ -1554,7 +1553,7 @@ class Story extends RuntimeObject {
   RuntimeObject? EvaluateExpression(Container exprContainer) {
     int startCallStackHeight = state.callStack.elements.length;
 
-    state.callStack.push(PushPopType.Tunnel);
+    state.callStack.Push(PushPopType.Tunnel);
 
     _temporaryEvaluationContainer = exprContainer;
 
@@ -1615,7 +1614,7 @@ class Story extends RuntimeObject {
                 "' which has not been bound, and fallback ink function could not be found.");
 
         // Divert direct into fallback function and we're done
-        state.callStack.push(PushPopType.Function,
+        state.callStack.Push(PushPopType.Function,
             outputStreamLengthWithPushed: state.outputStream.length);
         state.divertedPointer = Pointer.StartOf(fallbackFunctionContainer!);
         return;
@@ -1765,7 +1764,7 @@ class Story extends RuntimeObject {
 
     // Divert step?
     if (!state.divertedPointer!.isNull) {
-      state.currentPointer = state.divertedPointer;
+      state.currentPointer = state.divertedPointer!;
       state.divertedPointer = Pointer.Null;
 
       // Internally uses state.previousContentObject and state.currentContentObject
@@ -1789,7 +1788,7 @@ class Story extends RuntimeObject {
     if (!successfulPointerIncrement) {
       bool didPop = false;
 
-      if (state.callStack.canPopType(PushPopType.Function)) {
+      if (state.callStack.CanPop(PushPopType.Function)) {
         // Pop from the call stack
         state.PopCallstack(PushPopType.Function);
 
@@ -1801,7 +1800,7 @@ class Story extends RuntimeObject {
 
         didPop = true;
       } else if (state.callStack.canPopThread) {
-        state.callStack.popThread();
+        state.callStack.PopThread();
 
         didPop = true;
       } else {
@@ -1818,7 +1817,7 @@ class Story extends RuntimeObject {
   bool IncrementContentPointer() {
     bool successfulIncrement = true;
 
-    var pointer = state.callStack.currentElement.currentPointer!;
+    var pointer = state.callStack.currentElement.currentPointer;
     pointer.index++;
 
     // Each time we step off the end, we fall out to the next container, all the
@@ -1872,7 +1871,7 @@ class Story extends RuntimeObject {
     // the invisible choice then make sure that the choice thread is
     // left intact, and it isn't re-entered in an old state.
     if (_stateSnapshotAtLastNewline != null) {
-      state.callStack.currentThread = state.callStack.forkThread();
+      state.callStack.currentThread = state.callStack.ForkThread();
     }
 
     ChoosePath(choice.targetPath!, false);
@@ -1987,7 +1986,7 @@ class Story extends RuntimeObject {
 
     // Move up callstack if possible
     for (int i = state.callStack.elements.length - 1; i >= 0; --i) {
-      pointer = state.callStack.elements[i].currentPointer!;
+      pointer = state.callStack.elements[i].currentPointer;
       if (!pointer.isNull && pointer.Resolve() != null) {
         dm = pointer.Resolve()!.debugMetadata;
         if (dm != null) {

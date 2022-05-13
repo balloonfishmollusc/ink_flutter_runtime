@@ -186,7 +186,7 @@ class VariablesState extends Iterable<String> {
     }
 
     // Temporary
-    varValue = callStack.getTemporaryVariableWithName(name, contextIndex);
+    varValue = callStack.GetTemporaryVariableWithName(name, contextIndex);
 
     return varValue;
   }
@@ -235,7 +235,7 @@ class VariablesState extends Iterable<String> {
     if (setGlobal) {
       SetGlobal(name!, value);
     } else {
-      callStack.setTemporaryVariable(
+      callStack.SetTemporaryVariable(
           name!, value, varAss.isNewDeclaration, contextIndex);
     }
   }

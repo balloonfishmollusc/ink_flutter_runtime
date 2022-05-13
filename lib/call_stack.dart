@@ -1,3 +1,5 @@
+// reviewed
+
 import 'addons/extra.dart';
 import 'json_serialisation.dart';
 import 'path.dart';
@@ -7,28 +9,21 @@ import 'runtime_object.dart';
 import 'story.dart';
 
 class CallStackElement {
-  Pointer? currentPointer;
+  Pointer currentPointer;
 
-  bool inExpressionEvaluation = false;
+  bool inExpressionEvaluation;
   Map<String, RuntimeObject?> temporaryVariables = {};
-  PushPopType type = PushPopType.Function;
+  final PushPopType type;
 
-  // When this callstack element is actually a function evaluation called from the game,
-  // we need to keep track of the size of the evaluation stack when it was called
-  // so that we know whether there was any return value.
   int evaluationStackHeightWhenPushed = 0;
-
-  // When functions are called, we trim whitespace from the start and end of what
-  // they generate, so we make sure know where the function's start and end are.
   int functionStartInOuputStream = 0;
 
   CallStackElement(this.type, this.currentPointer,
       [this.inExpressionEvaluation = false]);
 
-  CallStackElement copy() {
+  CallStackElement Copy() {
     var copy = CallStackElement(type, currentPointer, inExpressionEvaluation);
-    copy.temporaryVariables =
-        Map<String, RuntimeObject?>.of(temporaryVariables);
+    copy.temporaryVariables = Map.of(temporaryVariables);
     copy.evaluationStackHeightWhenPushed = evaluationStackHeightWhenPushed;
     copy.functionStartInOuputStream = functionStartInOuputStream;
     return copy;
@@ -36,30 +31,20 @@ class CallStackElement {
 }
 
 class CallStackThread {
-  List<CallStackElement> callstack = [];
+  final List<CallStackElement> callstack = [];
   int threadIndex = 0;
-  Pointer? previousPointer;
+  Pointer previousPointer = Pointer.Null;
 
-  CallStackThread Copy() {
-    var copy = CallStackThread.new0();
-    copy.threadIndex = threadIndex;
-    for (var e in callstack) {
-      copy.callstack.add(e.copy());
-    }
-    copy.previousPointer = previousPointer;
-    return copy;
-  }
-
-  CallStackThread.new0();
+  CallStackThread();
 
   CallStackThread.new1(Map<String, dynamic> jThreadObj, Story storyContext) {
-    threadIndex = jThreadObj["threadIndex"] as int;
+    threadIndex = jThreadObj["threadIndex"];
 
     List<dynamic> jThreadCallstack = jThreadObj["callstack"];
     for (var jElTok in jThreadCallstack) {
       var jElementObj = jElTok as Map<String, dynamic>;
 
-      PushPopType pushPopType = jElementObj["type"] as PushPopType;
+      PushPopType pushPopType = PushPopType.values[jElementObj["type"]];
 
       Pointer pointer = Pointer.Null;
 
@@ -103,33 +88,43 @@ class CallStackThread {
       callstack.add(el);
     }
 
-    dynamic prevContentObjPath = jThreadObj["previousContentObject"];
+    String? prevContentObjPath = jThreadObj["previousContentObject"];
     if (prevContentObjPath != null) {
-      var prevPath = Path.new3(prevContentObjPath as String);
+      var prevPath = Path.new3(prevContentObjPath);
       previousPointer = storyContext.PointerAtPath(prevPath);
     }
+  }
+
+  CallStackThread Copy() {
+    var copy = CallStackThread();
+    copy.threadIndex = threadIndex;
+    for (var e in callstack) {
+      copy.callstack.add(e.Copy());
+    }
+    copy.previousPointer = previousPointer;
+    return copy;
   }
 
   dynamic WriteJson() {
     var dict = <String, dynamic>{};
     dict["threadIndex"] = threadIndex;
 
-    if (!previousPointer!.isNull) {
+    if (!previousPointer.isNull) {
       dict["previousContentObject"] =
-          previousPointer?.Resolve()?.path.toString();
+          previousPointer.Resolve()?.path.toString();
     }
 
     var elements = [];
     for (CallStackElement el in callstack) {
       var item = <String, dynamic>{};
 
-      if (!el.currentPointer!.isNull) {
-        item["cPath"] = el.currentPointer!.container!.path.componentsString;
-        item["idx"] = el.currentPointer!.index;
+      if (!el.currentPointer.isNull) {
+        item["cPath"] = el.currentPointer.container!.path.componentsString;
+        item["idx"] = el.currentPointer.index;
       }
 
       item["exp"] = el.inExpressionEvaluation;
-      item["type"] = el.type as int;
+      item["type"] = el.type.index;
 
       if (el.temporaryVariables.isNotEmpty) {
         item["temp"] = Json.WriteDictionaryRuntimeObjs(el.temporaryVariables);
@@ -167,37 +162,28 @@ class CallStack {
 
   bool get canPop => callStack.length > 1;
 
-  CallStack._();
-
-  static CallStack new1(Story storyContext) {
-    var cs = CallStack._();
-    cs._startOfRoot = Pointer.StartOf(storyContext.rootContentContainer!);
-    cs.reset();
-    return cs;
+  CallStack.new1(Story storyContext) {
+    _startOfRoot = Pointer.StartOf(storyContext.rootContentContainer!);
+    Reset();
   }
 
-  static CallStack new2(CallStack toCopy) {
-    var cs = CallStack._();
+  CallStack.new2(CallStack toCopy) {
     for (var otherThread in toCopy._threads) {
-      cs._threads.add(otherThread.Copy());
+      _threads.add(otherThread.Copy());
     }
-    cs._threadCounter = toCopy._threadCounter;
-    cs._startOfRoot = toCopy._startOfRoot;
-    return cs;
+    _threadCounter = toCopy._threadCounter;
+    _startOfRoot = toCopy._startOfRoot;
   }
 
-  void reset() {
+  void Reset() {
     _threads = <CallStackThread>[];
-    _threads.add(CallStackThread.new0());
+    _threads.add(CallStackThread());
 
     _threads[0]
         .callstack
         .add(CallStackElement(PushPopType.Tunnel, _startOfRoot));
   }
 
-  // Unfortunately it's not possible to implement jsonToken since
-  // the setter needs to take a Story as a context in order to
-  // look up objects from paths for currentContainer within elements.
   void SetJsonToken(Map<String, dynamic> jObject, Story storyContext) {
     _threads.clear();
 
@@ -210,7 +196,7 @@ class CallStack {
     }
 
     _threadCounter = jObject["threadCounter"] as int;
-    _startOfRoot = Pointer.StartOf(storyContext.rootContentContainer!);
+    _startOfRoot = Pointer.StartOf(storyContext.rootContentContainer);
   }
 
   dynamic WriteJson() {
@@ -225,21 +211,21 @@ class CallStack {
     };
   }
 
-  void pushThread() {
+  void PushThread() {
     var newThread = currentThread.Copy();
     _threadCounter++;
     newThread.threadIndex = _threadCounter;
     _threads.add(newThread);
   }
 
-  CallStackThread forkThread() {
+  CallStackThread ForkThread() {
     var forkedThread = currentThread.Copy();
     _threadCounter++;
     forkedThread.threadIndex = _threadCounter;
     return forkedThread;
   }
 
-  void popThread() {
+  void PopThread() {
     if (canPopThread) {
       _threads.remove(currentThread);
     } else {
@@ -253,10 +239,9 @@ class CallStack {
     return currentElement.type == PushPopType.FunctionEvaluationFromGame;
   }
 
-  void push(PushPopType type,
+  void Push(PushPopType type,
       {int externalEvaluationStackHeight = 0,
       int outputStreamLengthWithPushed = 0}) {
-    // When pushing to callstack, maintain the current content path, but jump out of expressions by default
     var element = CallStackElement(type, currentElement.currentPointer, false);
 
     element.evaluationStackHeightWhenPushed = externalEvaluationStackHeight;
@@ -265,7 +250,7 @@ class CallStack {
     callStack.add(element);
   }
 
-  bool canPopType([PushPopType? type]) {
+  bool CanPop([PushPopType? type]) {
     if (!canPop) return false;
 
     if (type == null) return true;
@@ -273,8 +258,8 @@ class CallStack {
     return currentElement.type == type;
   }
 
-  void pop([PushPopType? type]) {
-    if (canPopType(type)) {
+  void Pop([PushPopType? type]) {
+    if (CanPop(type)) {
       callStack.removeAt(callStack.length - 1);
       return;
     } else {
@@ -282,8 +267,7 @@ class CallStack {
     }
   }
 
-  // Get variable value, dereferencing a variable pointer if necessary
-  RuntimeObject? getTemporaryVariableWithName(String name,
+  RuntimeObject? GetTemporaryVariableWithName(String name,
       [int contextIndex = -1]) {
     if (contextIndex == -1) contextIndex = currentElementIndex + 1;
 
@@ -294,7 +278,7 @@ class CallStack {
     return varValue;
   }
 
-  void setTemporaryVariable(String name, RuntimeObject value, bool declareNew,
+  void SetTemporaryVariable(String name, RuntimeObject value, bool declareNew,
       [int contextIndex = -1]) {
     if (contextIndex == -1) contextIndex = currentElementIndex + 1;
 
@@ -307,18 +291,10 @@ class CallStack {
     contextElement.temporaryVariables[name] = value;
   }
 
-  // Find the most appropriate context for this variable.
-  // Are we referencing a temporary or global variable?
-  // Note that the compiler will have warned us about possible conflicts,
-  // so anything that happens here should be safe!
-  int contextForVariableNamed(String name) {
-    // Current temporary context?
-    // (Shouldn't attempt to access contexts higher in the callstack.)
+  int ContextForVariableNamed(String name) {
     if (currentElement.temporaryVariables.containsKey(name)) {
       return currentElementIndex + 1;
     }
-
-    // Global
     else {
       return 0;
     }
@@ -351,7 +327,7 @@ class CallStack {
         }
 
         var pointer = thread.callstack[i].currentPointer;
-        if (!pointer!.isNull) {
+        if (!pointer.isNull) {
           sb.add("<SOMEWHERE IN ");
           sb.add(pointer.container!.path.toString());
           sb.add(">\n");
@@ -364,5 +340,5 @@ class CallStack {
 
   List<CallStackThread> _threads = [];
   int _threadCounter = 0;
-  Pointer? _startOfRoot;
+  Pointer _startOfRoot = Pointer.Null;
 }

@@ -125,7 +125,7 @@ class NativeFunctionCall extends RuntimeObject {
         // Return value unknown until it's evaluated
         dynamic resultVal = opForType(val1.value, val2.value);
 
-        return Value.create(resultVal);
+        return Value.Create(resultVal);
       }
 
       // Unary
@@ -134,7 +134,7 @@ class NativeFunctionCall extends RuntimeObject {
 
         var resultVal = opForType(val1.value);
 
-        return Value.create(resultVal);
+        return Value.Create(resultVal);
       }
     } else {
       throw Exception(

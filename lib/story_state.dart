@@ -1076,7 +1076,7 @@ class StoryState {
                       : arguments[i].GetType().Name));
         }
 
-        PushEvaluationStack(Value.create(arguments[i]));
+        PushEvaluationStack(Value.Create(arguments[i]));
       }
     }
   }

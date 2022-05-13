@@ -792,7 +792,7 @@ class Story extends RuntimeObject {
       if (varPointer != null && varPointer.contextIndex == -1) {
         // Create dynamic so we're not overwriting the story's own data
         var contextIdx =
-            state.callStack.ContextForVariableNamed(varPointer.variableName!);
+            state.callStack.ContextForVariableNamed(varPointer.variableName);
         currentContentObj =
             VariablePointerValue(varPointer.variableName, contextIdx);
       }
@@ -1645,7 +1645,7 @@ class Story extends RuntimeObject {
     // Convert return value (if any) to the a type that the ink engine can use
     RuntimeObject? returnObj;
     if (funcResult != null) {
-      returnObj = Value.create(funcResult);
+      returnObj = Value.Create(funcResult);
     } else {
       returnObj = Void();
     }

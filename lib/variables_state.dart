@@ -64,7 +64,7 @@ class VariablesState extends Iterable<String> {
           "Cannot assign to a variable ($variableName) that hasn't been declared in the story");
     }
 
-    var val = Value.create(value);
+    var val = Value.Create(value);
     SetGlobal(variableName, val);
   }
 
@@ -192,7 +192,7 @@ class VariablesState extends Iterable<String> {
   }
 
   RuntimeObject? ValueAtVariablePointer(VariablePointerValue pointer) {
-    return GetVariableWithName(pointer.variableName!, pointer.contextIndex);
+    return GetVariableWithName(pointer.variableName, pointer.contextIndex);
   }
 
   void Assign(VariableAssignment varAss, RuntimeObject value) {
@@ -278,11 +278,11 @@ class VariablesState extends Iterable<String> {
     int contextIndex = varPointer.contextIndex;
 
     if (contextIndex == -1) {
-      contextIndex = GetContextIndexOfVariableNamed(varPointer.variableName!);
+      contextIndex = GetContextIndexOfVariableNamed(varPointer.variableName);
     }
 
     var valueOfVariablePointedTo =
-        GetRawVariableWithName(varPointer.variableName!, contextIndex);
+        GetRawVariableWithName(varPointer.variableName, contextIndex);
 
     // Extra layer of indirection:
     // When accessing a pointer to a pointer (e.g. when calling nested or

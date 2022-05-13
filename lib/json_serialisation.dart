@@ -271,7 +271,7 @@ class Json {
   // Tag:            {"#": "the tag text"}
   static RuntimeObject? JTokenToRuntimeObject(dynamic token) {
     if (token is int || token is double || token is bool) {
-      return Value.create(token);
+      return Value.Create(token);
     }
 
     if (token is String) {

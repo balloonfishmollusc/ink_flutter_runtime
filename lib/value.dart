@@ -1,3 +1,5 @@
+// reviewed
+
 import 'runtime_object.dart';
 import 'path.dart';
 import 'story_exception.dart';
@@ -27,7 +29,7 @@ abstract class Value<T> extends RuntimeObject {
   @override
   String toString() => value.toString();
 
-  static Value create(dynamic val) {
+  static Value Create(dynamic val) {
     if (val is bool) {
       return BoolValue(val);
     } else if (val is int) {
@@ -48,7 +50,7 @@ abstract class Value<T> extends RuntimeObject {
   Value Cast(ValueType newType);
 
   @override
-  RuntimeObject Copy() => create(valueObject);
+  RuntimeObject Copy() => Create(valueObject);
 
   StoryException badCastException(ValueType targetType) {
     return StoryException(
@@ -150,15 +152,8 @@ class StringValue extends Value<String> {
   late final bool isInlineWhitespace;
 
   StringValue([String value = ""]) : super(value) {
-    // Classify whitespace status
     isNewline = value == "\n";
-    isInlineWhitespace = true;
-    for (var c in value.split("")) {
-      if (c != ' ' && c != '\t') {
-        isInlineWhitespace = false;
-        break;
-      }
-    }
+    isInlineWhitespace = value.trim().isEmpty;
   }
 
   bool get isNonWhitespace => !isNewline && !isInlineWhitespace;
@@ -204,11 +199,11 @@ class DivertTargetValue extends Value<Path?> {
   }
 }
 
-class VariablePointerValue extends Value<String?> {
-  VariablePointerValue([String? value, this.contextIndex = -1]) : super(value);
+class VariablePointerValue extends Value<String> {
+  VariablePointerValue(String value, [this.contextIndex = -1]) : super(value);
 
-  String? get variableName => value;
-  set variableName(String? value) => this.value = value;
+  String get variableName => value;
+  set variableName(String value) => this.value = value;
 
   int contextIndex;
 

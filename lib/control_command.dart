@@ -35,7 +35,7 @@ class ControlCommand extends RuntimeObject {
   ControlCommand(this.commandType);
 
   @override
-  RuntimeObject copy() => ControlCommand(commandType);
+  RuntimeObject Copy() => ControlCommand(commandType);
 
   @override
   String toString() => commandType.toString();

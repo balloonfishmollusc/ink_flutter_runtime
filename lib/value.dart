@@ -48,7 +48,7 @@ abstract class Value<T> extends RuntimeObject {
   Value Cast(ValueType newType);
 
   @override
-  RuntimeObject copy() => create(valueObject);
+  RuntimeObject Copy() => create(valueObject);
 
   StoryException badCastException(ValueType targetType) {
     return StoryException(
@@ -231,7 +231,7 @@ class VariablePointerValue extends Value<String?> {
   }
 
   @override
-  RuntimeObject copy() {
+  RuntimeObject Copy() {
     return VariablePointerValue(variableName, contextIndex);
   }
 }

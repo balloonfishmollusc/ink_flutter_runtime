@@ -1,3 +1,5 @@
+// reviewed
+
 import 'dart:math';
 import 'addons/extra.dart';
 
@@ -54,24 +56,22 @@ class RuntimeObject {
       } else {
         var comps = Stack<PathComponent>();
 
-        RuntimeObject child = this;
-        Container? container = child.parent as Container;
+        var child = this;
+        Container? container = child.parent!.csAs<Container>();
 
         while (container != null) {
-          if (child is INamedContent) {
-            var namedChild = child as INamedContent;
-            if (namedChild.hasValidName) {
-              comps.push(PathComponent.new2(namedChild.name!));
-            }
+          var namedChild = child.csAs<INamedContent>();
+          if (namedChild != null && namedChild.hasValidName) {
+            comps.push(PathComponent.new2(namedChild.name!));
           } else {
             comps.push(PathComponent.new1(container.content.indexOf(child)));
           }
 
           child = container;
-          container = container.parent as Container;
+          container = container.parent!.csAs<Container>();
         }
 
-        _path = Path.new2(comps.toList());
+        _path = Path.new2(comps);
       }
     }
 
@@ -159,12 +159,12 @@ class RuntimeObject {
   }
 
   Container? get rootContentContainer {
-    RuntimeObject ancestor = this;
-    while (ancestor.parent != null) {
-      ancestor = ancestor.parent!;
+    RuntimeObject? ancestor = this;
+    while (ancestor!.parent != null) {
+      ancestor = ancestor.parent;
     }
-    return (ancestor is Container) ? ancestor : null;
+    return ancestor.csAs<Container>();
   }
 
-  RuntimeObject copy() => throw UnimplementedError();
+  RuntimeObject Copy() => throw UnimplementedError();
 }

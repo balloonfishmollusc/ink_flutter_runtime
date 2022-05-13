@@ -11,32 +11,8 @@ import 'variable_assignment.dart';
 //    String variableName, RuntimeObject newValue);
 
 class VariablesState extends Iterable<String> {
-  final Event variableChangedEvent = Event(2);
-
   StatePatch? patch;
-
-  set batchObservingVariableChanges(bool value) {
-    _batchObservingVariableChanges = value;
-    if (value) {
-      _changedVariablesForBatchObs = <String>{};
-    }
-
-    // Finished observing variables in a batch - now send
-    // notifications for changed variables all in one go.
-    else {
-      if (_changedVariablesForBatchObs != null) {
-        for (var variableName in _changedVariablesForBatchObs!) {
-          var currentValue = _globalVariables[variableName]!;
-          variableChangedEvent.fire([variableName, currentValue]);
-        }
-      }
-
-      _changedVariablesForBatchObs = null;
-    }
-  }
-
-  bool get batchObservingVariableChanges => _batchObservingVariableChanges;
-  bool _batchObservingVariableChanges = false;
+  bool batchObservingVariableChanges = false;
 
   operator [](String? variableName) {
     RuntimeObject? varContents = patch?.globals[variableName];
@@ -77,13 +53,6 @@ class VariablesState extends Iterable<String> {
     for (var namedVar in patch!.globals.entries) {
       _globalVariables[namedVar.key] = namedVar.value;
     }
-
-    if (_changedVariablesForBatchObs != null) {
-      for (var name in patch!.changedVariables) {
-        _changedVariablesForBatchObs!.add(name);
-      }
-    }
-
     patch = null;
   }
 
@@ -257,18 +226,6 @@ class VariablesState extends Iterable<String> {
     } else {
       _globalVariables[variableName] = value;
     }
-
-    if (variableChangedEvent.isNotEmpty && !(value == oldValue)) {
-      if (batchObservingVariableChanges) {
-        if (patch != null) {
-          patch!.changedVariables.add(variableName);
-        } else if (_changedVariablesForBatchObs != null) {
-          _changedVariablesForBatchObs!.add(variableName);
-        }
-      } else {
-        variableChangedEvent.fire([variableName, value]);
-      }
-    }
   }
 
   // Given a variable pointer with just the name of the target known, resolve to a variable
@@ -315,5 +272,4 @@ class VariablesState extends Iterable<String> {
 
   // Used for accessing temporary variables
   CallStack callStack;
-  Set<String>? _changedVariablesForBatchObs;
 }

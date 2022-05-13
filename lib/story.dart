@@ -232,9 +232,6 @@ class Story extends RuntimeObject {
   /// </summary>
   void ResetState() {
     _state = StoryState(this);
-    _state!.variablesState!.variableChangedEvent
-        .addListener(VariableStateDidChangeEvent);
-
     ResetGlobals();
   }
 

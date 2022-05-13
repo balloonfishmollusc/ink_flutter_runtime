@@ -1,5 +1,6 @@
 import 'package:ink_flutter_runtime/i_named_content.dart';
 
+import 'addons/extra.dart';
 import 'runtime_object.dart';
 import 'path.dart';
 import 'search_result.dart';
@@ -93,7 +94,7 @@ class Container extends RuntimeObject implements INamedContent {
 
   Path? get pathToFirstLeafContent {
     _pathToFirstLeafContent ??=
-        path.pathByAppendingPath(internalPathToFirstLeafContent!);
+        path.PathByAppendingPath(internalPathToFirstLeafContent!);
     return _pathToFirstLeafContent;
   }
 
@@ -199,7 +200,7 @@ class Container extends RuntimeObject implements INamedContent {
     RuntimeObject currentObj = this;
 
     for (int i = partialPathStart; i < partialPathLength; ++i) {
-      var comp = path.getComponent(i)!;
+      var comp = path.GetComponent(i);
 
       // Path component was wrong type
       if (currentContainer == null) {

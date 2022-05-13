@@ -114,24 +114,24 @@ class VariablesState extends Iterable<String> {
     if (obj1.runtimeType != obj2.runtimeType) return false;
 
     // Perform equality on int/float/bool manually to avoid boxing
-    var boolVal = tryCast<BoolValue>(obj1);
+    var boolVal = obj1.csAs<BoolValue>();
     if (boolVal != null) {
       return boolVal.value == (obj2 as BoolValue).value;
     }
 
-    var intVal = tryCast<IntValue>(obj1);
+    var intVal = obj1.csAs<IntValue>();
     if (intVal != null) {
       return intVal.value == (obj2 as IntValue).value;
     }
 
-    var floatVal = tryCast<FloatValue>(obj1);
+    var floatVal = obj1.csAs<FloatValue>();
     if (floatVal != null) {
       return floatVal.value == (obj2 as FloatValue).value;
     }
 
     // Other Value type (using proper Equals: list, string, divert path)
-    var val1 = tryCast<Value>(obj1);
-    var val2 = tryCast<Value>(obj2);
+    var val1 = obj1.csAs<Value>();
+    var val2 = obj2.csAs<Value>();
     if (val1 != null) {
       return val1.valueObject == val2?.valueObject;
     }
@@ -154,7 +154,7 @@ class VariablesState extends Iterable<String> {
     RuntimeObject? varValue = GetRawVariableWithName(name, contextIndex);
 
     // Get value from pointer?
-    var varPointer = tryCast<VariablePointerValue>(varValue);
+    var varPointer = varValue?.csAs<VariablePointerValue>();
     if (varPointer != null) {
       varValue = ValueAtVariablePointer(varPointer);
     }
@@ -209,7 +209,7 @@ class VariablesState extends Iterable<String> {
 
     // Constructing new variable pointer reference
     if (varAss.isNewDeclaration) {
-      var varPointer = tryCast<VariablePointerValue>(value);
+      var varPointer = value.csAs<VariablePointerValue>();
       if (varPointer != null) {
         var fullyResolvedVariablePointer = ResolveVariablePointer(varPointer);
         value = fullyResolvedVariablePointer;
@@ -222,8 +222,8 @@ class VariablesState extends Iterable<String> {
       // De-reference variable reference to point to
       VariablePointerValue? existingPointer;
       do {
-        existingPointer = tryCast<VariablePointerValue>(
-            GetRawVariableWithName(name!, contextIndex));
+        existingPointer = GetRawVariableWithName(name!, contextIndex)
+            ?.csAs<VariablePointerValue>();
         if (existingPointer != null) {
           name = existingPointer.variableName;
           contextIndex = existingPointer.contextIndex;
@@ -289,7 +289,7 @@ class VariablesState extends Iterable<String> {
     // recursive functions that take a variable references, ensure we don't create
     // a chain of indirection by just returning the final target.
     var doubleRedirectionPointer =
-        tryCast<VariablePointerValue>(valueOfVariablePointedTo);
+        valueOfVariablePointedTo?.csAs<VariablePointerValue>();
     if (doubleRedirectionPointer != null) {
       return doubleRedirectionPointer;
     }

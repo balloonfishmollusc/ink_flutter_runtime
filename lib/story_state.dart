@@ -217,7 +217,7 @@ class StoryState {
       var sb = StringBuilder();
 
       for (var outputObj in outputStream) {
-        var textContent = tryCast<StringValue>(outputObj);
+        var textContent = outputObj.csAs<StringValue>();
         if (textContent != null) {
           sb.add(textContent.value);
         }
@@ -273,7 +273,7 @@ class StoryState {
       _currentTags = <String>[];
 
       for (var outputObj in outputStream) {
-        var tag = tryCast<Tag>(outputObj);
+        var tag = outputObj.csAs<Tag>();
         if (tag != null) {
           _currentTags.add(tag.text);
         }
@@ -641,7 +641,7 @@ class StoryState {
   // Push to output stream, but split out newlines in text for consistency
   // in dealing with them later.
   void PushToOutputStream(RuntimeObject obj) {
-    var text = tryCast<StringValue>(obj);
+    var text = obj.csAs<StringValue>();
     if (text != null) {
       var listText = TrySplittingHeadTailWhitespace(text);
       if (listText != null) {
@@ -751,8 +751,8 @@ class StoryState {
   }
 
   void PushToOutputStreamIndividual(RuntimeObject obj) {
-    var glue = tryCast<Glue>(obj);
-    var text = tryCast<StringValue>(obj);
+    var glue = obj.csAs<Glue>();
+    var text = obj.csAs<StringValue>();
 
     bool includeInOutput = true;
 
@@ -783,8 +783,8 @@ class StoryState {
       int glueTrimIndex = -1;
       for (int i = outputStream.length - 1; i >= 0; i--) {
         var o = outputStream[i];
-        var c = tryCast<ControlCommand>(o);
-        var g = tryCast<Glue>(o);
+        var c = o.csAs<ControlCommand>();
+        var g = o.csAs<Glue>();
 
         // Find latest glue
         if (g != null) {
@@ -867,8 +867,8 @@ class StoryState {
     int i = outputStream.length - 1;
     while (i >= 0) {
       var obj = outputStream[i];
-      var cmd = tryCast<ControlCommand>(obj);
-      var txt = tryCast<StringValue>(obj);
+      var cmd = obj.csAs<ControlCommand>();
+      var txt = obj.csAs<StringValue>();
 
       if (cmd != null || (txt != null && txt.isNonWhitespace)) {
         break;
@@ -882,7 +882,7 @@ class StoryState {
     if (removeWhitespaceFrom >= 0) {
       i = removeWhitespaceFrom;
       while (i < outputStream.length) {
-        var text = tryCast<StringValue>(outputStream[i]);
+        var text = outputStream[i].csAs<StringValue>();
         if (text != null) {
           outputStream.removeAt(i);
         } else {
@@ -916,7 +916,7 @@ class StoryState {
         if (obj is ControlCommand) {
           break;
         }
-        var text = tryCast<StringValue>(outputStream[i]);
+        var text = outputStream[i].csAs<StringValue>();
         if (text != null) {
           if (text.isNewline) {
             return true;
@@ -941,7 +941,7 @@ class StoryState {
 
   bool get inStringEvaluation {
     for (int i = outputStream.length - 1; i >= 0; i--) {
-      var cmd = tryCast<ControlCommand>(outputStream[i]);
+      var cmd = outputStream[i].csAs<ControlCommand>();
       if (cmd != null && cmd.commandType == CommandType.BeginString) {
         return true;
       }
@@ -1014,8 +1014,8 @@ class StoryState {
     // Trim whitespace from END of function call
     for (int i = outputStream.length - 1; i >= functionStartPoint; i--) {
       var obj = outputStream[i];
-      var txt = tryCast<StringValue>(obj);
-      var cmd = tryCast<ControlCommand>(obj);
+      var txt = obj.csAs<StringValue>();
+      var cmd = obj.csAs<ControlCommand>();
       if (txt == null) continue;
       if (cmd != null) break;
 

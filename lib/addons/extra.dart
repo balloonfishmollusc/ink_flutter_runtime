@@ -1,12 +1,39 @@
 // reviewed
 
+import 'dart:collection';
+
 abstract class Struct {
   Struct clone();
 }
 
-T? tryCast<T extends Object>(dynamic obj) {
-  if (obj is T) return obj;
-  return null;
+class StringBuilder extends ListBase<String> {
+  final List<String> lst = <String>[];
+
+  @override
+  int get length => lst.length;
+
+  @override
+  String operator [](int index) => lst[index];
+
+  @override
+  void operator []=(int index, String value) {
+    lst[index] = value;
+  }
+
+  @override
+  set length(int newLength) {
+    lst.length = newLength;
+  }
+
+  @override
+  String toString() => lst.join();
+}
+
+extension CsObject on Object {
+  T? csAs<T extends Object>() {
+    if (this is T) return this as T;
+    return null;
+  }
 }
 
 class Event extends Iterable<Function> {

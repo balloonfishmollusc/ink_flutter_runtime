@@ -1,14 +1,16 @@
+// reviewed
+
 import 'container.dart';
 import 'push_pop.dart';
 import 'runtime_object.dart';
 import 'path.dart';
 import 'pointer.dart';
+import 'addons/extra.dart';
 
 class Divert extends RuntimeObject {
   Path? _targetPath;
 
   Path? get targetPath {
-    // Resolve any relative paths to global ones as we come across them
     if (_targetPath != null && _targetPath!.isRelative) {
       var targetObj = targetPointer.Resolve();
       if (targetObj != null) {
@@ -25,13 +27,13 @@ class Divert extends RuntimeObject {
 
   Pointer get targetPointer {
     if (_targetPointer!.isNull) {
-      var targetObj = ResolvePath(_targetPath!).obj;
+      var targetObj = ResolvePath(_targetPath!).obj!;
 
       if (_targetPath!.lastComponent!.isIndex) {
-        _targetPointer!.container = targetObj!.parent as Container;
+        _targetPointer!.container = targetObj.parent?.csAs<Container>();
         _targetPointer!.index = _targetPath!.lastComponent!.index;
       } else {
-        _targetPointer = Pointer.StartOf(targetObj as Container);
+        _targetPointer = Pointer.StartOf(targetObj.csAs<Container>());
       }
     }
     return _targetPointer!.clone() as Pointer;
@@ -86,8 +88,8 @@ class Divert extends RuntimeObject {
 
   @override
   bool operator ==(Object other) {
-    if (other is Divert) {
-      var otherDivert = other;
+    var otherDivert = other.csAs<Divert>();
+    if (otherDivert != null) {
       if (hasVariableTarget == otherDivert.hasVariableTarget) {
         if (hasVariableTarget) {
           return variableDivertName == otherDivert.variableDivertName;

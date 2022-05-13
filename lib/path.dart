@@ -1,10 +1,12 @@
+// reviewed
+
 class PathComponent {
   final int index;
   final String? name;
   bool get isIndex => index >= 0;
   bool get isParent => name == Path.parentId;
 
-  const PathComponent._({required this.index, this.name});
+  const PathComponent._({this.index = -1, this.name});
 
   static PathComponent new1(int index) {
     assert(index >= 0);
@@ -13,10 +15,10 @@ class PathComponent {
 
   static PathComponent new2(String name) {
     assert(name.isNotEmpty);
-    return PathComponent._(index: -1, name: name);
+    return PathComponent._(name: name);
   }
 
-  static PathComponent toParent() {
+  static PathComponent ToParent() {
     return new2(Path.parentId);
   }
 
@@ -28,7 +30,8 @@ class PathComponent {
 
   @override
   bool operator ==(Object other) {
-    PathComponent otherComp = other as PathComponent;
+    if (other is! PathComponent) return false;
+    PathComponent otherComp = other;
     if (otherComp.isIndex == isIndex) {
       if (isIndex) {
         return index == otherComp.index;
@@ -41,22 +44,26 @@ class PathComponent {
 }
 
 class Path {
-  static String parentId = "^";
+  static const String parentId = "^";
 
-  final List<PathComponent> _components = <PathComponent>[];
+  final List<PathComponent> _components = [];
   bool _isRelative = false;
   String? _componentsString;
 
   bool get isRelative => _isRelative;
   int get length => _components.length;
 
-  PathComponent? getComponent(int index) {
+  PathComponent GetComponent(int index) {
+    return _components[index];
+  }
+
+  PathComponent? getComponentSafe(int index) {
     if (index < 0 || index >= length) return null;
     return _components[index];
   }
 
-  PathComponent? get head => getComponent(0);
-  PathComponent? get lastComponent => getComponent(length - 1);
+  PathComponent? get head => getComponentSafe(0);
+  PathComponent? get lastComponent => getComponentSafe(length - 1);
 
   Path get tail {
     if (_components.length >= 2) {
@@ -67,26 +74,25 @@ class Path {
     }
   }
 
-  static Path new1(PathComponent head, Path tail) {
-    return Path()
-      .._components.add(head)
-      .._components.addAll(tail._components);
+  Path();
+
+  Path.new1(PathComponent head, Path tail) {
+    _components.add(head);
+    _components.addAll(tail._components);
   }
 
-  static Path new2(Iterable<PathComponent> components,
-      {bool relative = false}) {
-    return Path()
-      .._isRelative = relative
-      .._components.addAll(components);
+  Path.new2(Iterable<PathComponent> components, {bool relative = false}) {
+    _components.addAll(components);
+    _isRelative = relative;
   }
 
-  static Path new3(String? componentsString) {
-    return Path().._setComponentsString(componentsString);
+  Path.new3(String? componentsString) {
+    _setComponentsString(componentsString);
   }
 
   static Path get self => Path().._isRelative = true;
 
-  Path pathByAppendingPath(Path pathToAppend) {
+  Path PathByAppendingPath(Path pathToAppend) {
     Path p = Path();
 
     int upwardMoves = 0;
@@ -129,14 +135,8 @@ class Path {
 
     _componentsString = value;
 
-    // Empty path, empty components
-    // (path is to root, like "/" in file system)
     if (_componentsString?.isNotEmpty != true) return;
 
-    // When components start with ".", it indicates a relative path, e.g.
-    //   .^.^.hello.5
-    // is equivalent to file system style path:
-    //  ../../hello/5
     if (_componentsString![0] == '.') {
       _isRelative = true;
       _componentsString = _componentsString!.substring(1);
@@ -163,7 +163,8 @@ class Path {
 
   @override
   bool operator ==(Object other) {
-    Path otherPath = other as Path;
+    if (other is! Path) return false;
+    Path otherPath = other;
     if (otherPath._components.length != _components.length) return false;
     if (otherPath.isRelative != isRelative) return false;
 

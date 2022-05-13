@@ -36,7 +36,7 @@ class Pointer extends Struct {
     return "Ink Pointer -> " + container!.path.toString() + " -- index $index";
   }
 
-  static Pointer StartOf(Container container) {
+  static Pointer StartOf(Container? container) {
     return Pointer(container: container, index: 0);
   }
 

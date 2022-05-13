@@ -729,7 +729,7 @@ class Story extends RuntimeObject {
     }
 
     // Step directly to the first element of content in a container (if necessary)
-    Container? containerToEnter = tryCast<Container>(pointer.Resolve());
+    Container? containerToEnter = pointer.Resolve()?.csAs<Container>();
     while (containerToEnter != null) {
       // Mark container as being entered
       VisitContainer(containerToEnter, true);
@@ -740,7 +740,7 @@ class Story extends RuntimeObject {
       }
 
       pointer = Pointer.StartOf(containerToEnter);
-      containerToEnter = tryCast<Container>(pointer.Resolve());
+      containerToEnter = pointer.Resolve()?.csAs<Container>();
     }
     state.currentPointer = pointer;
 
@@ -766,7 +766,7 @@ class Story extends RuntimeObject {
     }
 
     // Choice with condition?
-    var choicePoint = tryCast<ChoicePoint>(currentContentObj);
+    var choicePoint = currentContentObj.csAs<ChoicePoint>();
     if (choicePoint != null) {
       var choice = ProcessChoice(choicePoint);
       if (choice != null) {
@@ -788,7 +788,7 @@ class Story extends RuntimeObject {
       // If we're pushing a variable pointer onto the evaluation stack, ensure that it's specific
       // to our current (possibly temporary) context index. And make a copy of the pointer
       // so that we're not editing the original runtime dynamic.
-      var varPointer = tryCast<VariablePointerValue>(currentContentObj);
+      var varPointer = currentContentObj?.csAs<VariablePointerValue>();
       if (varPointer != null && varPointer.contextIndex == -1) {
         // Create dynamic so we're not overwriting the story's own data
         var contextIdx =
@@ -812,7 +812,7 @@ class Story extends RuntimeObject {
 
     // Starting a thread should be done after the increment to the content pointer,
     // so that when returning from the thread, it returns to the content after this instruction.
-    var controlCmd = tryCast<ControlCommand>(currentContentObj);
+    var controlCmd = currentContentObj?.csAs<ControlCommand>();
     if (controlCmd != null &&
         controlCmd.commandType == CommandType.StartThread) {
       state.callStack.pushThread();
@@ -846,7 +846,7 @@ class Story extends RuntimeObject {
     // First, find the previously open set of containers
     _prevContainers.clear();
     if (!previousPointer!.isNull) {
-      Container? prevAncestor = tryCast<Container>(previousPointer.Resolve()) ??
+      Container? prevAncestor = previousPointer.Resolve()?.csAs<Container>() ??
           previousPointer.container as Container;
       while (prevAncestor != null) {
         _prevContainers.add(prevAncestor);
@@ -862,7 +862,7 @@ class Story extends RuntimeObject {
     if (currentChildOfContainer == null) return;
 
     Container? currentContainerAncestor =
-        tryCast<Container>(currentChildOfContainer.parent);
+        currentChildOfContainer.parent?.csAs<Container>();
 
     bool allChildrenEnteredAtStart = true;
     while (currentContainerAncestor != null &&
@@ -1002,7 +1002,7 @@ class Story extends RuntimeObject {
                   varName +
                   ")");
         } else if (varContents is! DivertTargetValue) {
-          var intContent = tryCast<IntValue>(varContents);
+          var intContent = varContents.csAs<IntValue>();
 
           String errorMessage =
               "Tried to divert to a target from a variable, but the variable ($varName) didn't contain a divert target, it ";
@@ -1100,7 +1100,7 @@ class Story extends RuntimeObject {
           DivertTargetValue? overrideTunnelReturnTarget;
           if (popType == PushPopType.Tunnel) {
             var popped = state.PopEvaluationStack();
-            overrideTunnelReturnTarget = tryCast<DivertTargetValue>(popped);
+            overrideTunnelReturnTarget = popped.csAs<DivertTargetValue>();
             if (overrideTunnelReturnTarget == null) {
               Assert(popped is Void,
                   "Expected void if ->-> doesn't override target");
@@ -1157,7 +1157,7 @@ class Story extends RuntimeObject {
 
             outputCountConsumed++;
 
-            var command = obj.tryCast<ControlCommand>();
+            var command = obj.csAs<ControlCommand>();
             if (command != null &&
                 command.commandType == CommandType.BeginString) {
               break;
@@ -1208,10 +1208,10 @@ class Story extends RuntimeObject {
             break;
           }
 
-          var divertTarget = target.tryCast<DivertTargetValue>();
+          var divertTarget = target.csAs<DivertTargetValue>();
           var container = ContentAtPath(divertTarget!.targetPath!)
               .correctObj
-              ?.tryCast<Container>();
+              ?.csAs<Container>();
 
           int eitherCount;
           if (container != null) {
@@ -1236,8 +1236,8 @@ class Story extends RuntimeObject {
 
         case CommandType.Random:
           {
-            var maxInt = state.PopEvaluationStack().tryCast<IntValue>();
-            var minInt = state.PopEvaluationStack().tryCast<IntValue>();
+            var maxInt = state.PopEvaluationStack().csAs<IntValue>();
+            var minInt = state.PopEvaluationStack().csAs<IntValue>();
 
             if (minInt == null) {
               Error("Invalid value for minimum parameter of RANDOM(min, max)");
@@ -1268,7 +1268,7 @@ class Story extends RuntimeObject {
           }
 
         case CommandType.SeedRandom:
-          var seed = state.PopEvaluationStack().tryCast<IntValue>();
+          var seed = state.PopEvaluationStack().csAs<IntValue>();
           if (seed == null) {
             Error("Invalid value passed to SEED_RANDOM");
           }
@@ -1723,7 +1723,7 @@ class Story extends RuntimeObject {
     // Any initial tag dynamics count as the "main tags" associated with that story/knot/stitch
     List<String>? tags;
     for (var c in flowContainer!.content) {
-      var tag = tryCast<Tag>(c);
+      var tag = c.csAs<Tag>();
       if (tag != null) {
         tags ??= <String>[];
         tags.add(tag.text);
@@ -1826,7 +1826,7 @@ class Story extends RuntimeObject {
     while (pointer.index >= pointer.container!.content.length) {
       successfulIncrement = false;
 
-      Container? nextAncestor = pointer.container?.parent?.tryCast<Container>();
+      Container? nextAncestor = pointer.container?.parent?.csAs<Container>();
       if (nextAncestor == null) {
         break;
       }
@@ -1884,7 +1884,7 @@ class Story extends RuntimeObject {
   // from a consistent seed each time.
   // TODO: Is this the best algorithm it can be?
   int NextSequenceShuffleIndex() {
-    var numElementsIntVal = state.PopEvaluationStack().tryCast<IntValue>();
+    var numElementsIntVal = state.PopEvaluationStack().csAs<IntValue>();
     if (numElementsIntVal == null) {
       Error("expected number of elements in sequence for shuffle index");
       return 0;
@@ -1894,7 +1894,7 @@ class Story extends RuntimeObject {
 
     int numElements = numElementsIntVal.value;
 
-    var seqCountVal = state.PopEvaluationStack().tryCast<IntValue>();
+    var seqCountVal = state.PopEvaluationStack().csAs<IntValue>();
     var seqCount = seqCountVal!.value;
     var loopIndex = seqCount / numElements;
     var iterationIndex = seqCount % numElements;

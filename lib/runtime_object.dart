@@ -1,6 +1,7 @@
 import 'dart:math';
+import 'addons/extra.dart';
+
 import 'addons/stack.dart';
-import 'dart:collection';
 
 import 'container.dart';
 import 'i_named_content.dart';
@@ -8,35 +9,7 @@ import 'path.dart';
 import 'debug_metadata.dart';
 import 'search_result.dart';
 
-class StringBuilder extends ListBase<String> {
-  final List<String> lst = <String>[];
-
-  @override
-  int get length => lst.length;
-
-  @override
-  String operator [](int index) => lst[index];
-
-  @override
-  void operator []=(int index, String value) {
-    lst[index] = value;
-  }
-
-  @override
-  set length(int newLength) {
-    lst.length = newLength;
-  }
-
-  @override
-  String toString() => lst.join();
-}
-
 class RuntimeObject {
-  T? tryCast<T extends RuntimeObject>() {
-    if (this is T) return this as T;
-    return null;
-  }
-
   RuntimeObject? parent;
 
   DebugMetadata? get debugMetadata {
@@ -107,14 +80,14 @@ class RuntimeObject {
 
   SearchResult ResolvePath(Path path) {
     if (path.isRelative) {
-      Container? nearestContainer = tryCast<Container>();
+      Container? nearestContainer = csAs<Container>();
       if (nearestContainer == null) {
         assert(parent != null,
             "Can't resolve relative path because we don't have a parent");
 
-        nearestContainer = parent!.tryCast<Container>();
+        nearestContainer = parent!.csAs<Container>();
         assert(nearestContainer != null, "Expected parent to be a container");
-        assert(path.getComponent(0)!.isParent);
+        assert(path.GetComponent(0).isParent);
         path = path.tail;
       }
 
@@ -135,8 +108,8 @@ class RuntimeObject {
     int lastSharedPathCompIndex = -1;
 
     for (int i = 0; i < minPathLength; ++i) {
-      var ownComp = ownPath.getComponent(i);
-      var otherComp = globalPath.getComponent(i);
+      var ownComp = ownPath.GetComponent(i);
+      var otherComp = globalPath.GetComponent(i);
 
       if (ownComp == otherComp) {
         lastSharedPathCompIndex = i;
@@ -153,13 +126,13 @@ class RuntimeObject {
     var newPathComps = <PathComponent>[];
 
     for (int up = 0; up < numUpwardsMoves; ++up) {
-      newPathComps.add(PathComponent.toParent());
+      newPathComps.add(PathComponent.ToParent());
     }
 
     for (int down = lastSharedPathCompIndex + 1;
         down < globalPath.length;
         ++down) {
-      newPathComps.add(globalPath.getComponent(down)!);
+      newPathComps.add(globalPath.GetComponent(down));
     }
 
     var relativePath = Path.new2(newPathComps, relative: true);
@@ -171,7 +144,7 @@ class RuntimeObject {
     String? relativePathStr;
     if (otherPath.isRelative) {
       relativePathStr = otherPath.componentsString;
-      globalPathStr = path.pathByAppendingPath(otherPath).componentsString;
+      globalPathStr = path.PathByAppendingPath(otherPath).componentsString;
     } else {
       var relativePath = ConvertPathToRelative(otherPath);
       relativePathStr = relativePath.componentsString;

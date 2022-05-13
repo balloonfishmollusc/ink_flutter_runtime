@@ -57,12 +57,12 @@ class Json {
   }
 
   static dynamic WriteRuntimeObject(RuntimeObject? obj) {
-    var container = obj?.tryCast<Container>();
+    var container = obj?.csAs<Container>();
     if (container != null) {
       return WriteRuntimeContainer(container);
     }
 
-    var divert = tryCast<Divert>(obj);
+    var divert = obj?.csAs<Divert>();
     if (divert != null) {
       String divTypeKey = "->";
       if (divert.isExternal) {
@@ -94,7 +94,7 @@ class Json {
       return dict;
     }
 
-    var choicePoint = tryCast<ChoicePoint>(obj);
+    var choicePoint = obj?.csAs<ChoicePoint>();
     if (choicePoint != null) {
       var dict = <String, dynamic>{};
       dict["*"] = choicePoint.pathStringOnChoice;
@@ -102,22 +102,22 @@ class Json {
       return dict;
     }
 
-    var boolVal = tryCast<BoolValue>(obj);
+    var boolVal = obj?.csAs<BoolValue>();
     if (boolVal != null) {
       return boolVal.value;
     }
 
-    var intVal = tryCast<IntValue>(obj);
+    var intVal = obj?.csAs<IntValue>();
     if (intVal != null) {
       return intVal.value;
     }
 
-    var floatVal = tryCast<FloatValue>(obj);
+    var floatVal = obj?.csAs<FloatValue>();
     if (floatVal != null) {
       return floatVal.value;
     }
 
-    var strVal = tryCast<StringValue>(obj);
+    var strVal = obj?.csAs<StringValue>();
     if (strVal != null) {
       if (strVal.isNewline) {
         return "\n";
@@ -126,14 +126,14 @@ class Json {
       }
     }
 
-    var divTargetVal = tryCast<DivertTargetValue>(obj);
+    var divTargetVal = obj?.csAs<DivertTargetValue>();
     if (divTargetVal != null) {
       var dict = <String, dynamic>{};
       dict["^->"] = divTargetVal.value!.componentsString;
       return dict;
     }
 
-    var varPtrVal = tryCast<VariablePointerValue>(obj);
+    var varPtrVal = obj?.csAs<VariablePointerValue>();
     if (varPtrVal != null) {
       var dict = <String, dynamic>{};
       dict["^var"] = varPtrVal.value;
@@ -141,17 +141,17 @@ class Json {
       return dict;
     }
 
-    var glue = tryCast<Glue>(obj);
+    var glue = obj?.csAs<Glue>();
     if (glue != null) {
       return "<>";
     }
 
-    var controlCmd = tryCast<ControlCommand>(obj);
+    var controlCmd = obj?.csAs<ControlCommand>();
     if (controlCmd != null) {
       return _controlCommandNames[controlCmd.commandType];
     }
 
-    var nativeFunc = tryCast<NativeFunctionCall>(obj);
+    var nativeFunc = obj?.csAs<NativeFunctionCall>();
     if (nativeFunc != null) {
       var name = nativeFunc.name;
 
@@ -162,7 +162,7 @@ class Json {
     }
 
     // Variable reference
-    var varRef = tryCast<VariableReference>(obj);
+    var varRef = obj?.csAs<VariableReference>();
     if (varRef != null) {
       var dict = <String, dynamic>{};
 
@@ -176,7 +176,7 @@ class Json {
     }
 
     // Variable assignment
-    var varAss = tryCast<VariableAssignment>(obj);
+    var varAss = obj?.csAs<VariableAssignment>();
     if (varAss != null) {
       var dict = <String, dynamic>{};
 
@@ -189,13 +189,13 @@ class Json {
     }
 
     // Void
-    var voidObj = tryCast<Void>(obj);
+    var voidObj = obj?.csAs<Void>();
     if (voidObj != null) {
       return "void";
     }
 
     // Tag
-    var tag = tryCast<Tag>(obj);
+    var tag = obj?.csAs<Tag>();
     if (tag != null) {
       var dict = <String, dynamic>{};
       dict["#"] = tag.text;
@@ -203,7 +203,7 @@ class Json {
     }
 
     // Used when serialising save state only
-    var choice = tryCast<Choice>(obj);
+    var choice = obj?.csAs<Choice>();
     if (choice != null) {
       return WriteChoice(choice);
     }
@@ -532,7 +532,7 @@ class Json {
     //  - named content
     //  - a "#f" key with the countFlags
     // (if either exists at all, otherwise null)
-    var terminatingObj = tryCast<Map<String, dynamic>>(jArray.last);
+    var terminatingObj = jArray.last.tryCast<Map<String, dynamic>>();
     if (terminatingObj != null) {
       var namedOnlyContent = <String, RuntimeObject?>{};
 
@@ -543,7 +543,7 @@ class Json {
           container.name = keyVal.value.toString();
         } else {
           var namedContentItem = JTokenToRuntimeObject(keyVal.value);
-          var namedSubContainer = tryCast<Container>(namedContentItem);
+          var namedSubContainer = namedContentItem?.csAs<Container>();
           if (namedSubContainer != null) namedSubContainer.name = keyVal.key;
           namedOnlyContent[keyVal.key] = namedContentItem;
         }

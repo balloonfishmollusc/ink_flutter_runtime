@@ -1,3 +1,5 @@
+// reviewed
+
 import 'dart:math';
 
 import 'path.dart';
@@ -38,12 +40,12 @@ class NativeFunctionCall extends RuntimeObject {
   static const String Hasnt = "!?";
   static const String Intersect = "^";
 
-  static NativeFunctionCall callWithName(String functionName) {
+  static NativeFunctionCall CallWithName(String functionName) {
     return NativeFunctionCall(functionName);
   }
 
-  static bool callExistsWithName(String functionName) {
-    generateNativeFunctionsIfNecessary();
+  static bool CallExistsWithName(String functionName) {
+    GenerateNativeFunctionsIfNecessary();
     return _nativeFunctions!.containsKey(functionName);
   }
 
@@ -64,15 +66,11 @@ class NativeFunctionCall extends RuntimeObject {
     }
   }
 
-  void _setNumberOfParameters(int value) {
-    _numberOfParameters = value;
-  }
-
   int _numberOfParameters = 0;
 
-  RuntimeObject? call(List<RuntimeObject> parameters) {
+  RuntimeObject? Call(List<RuntimeObject> parameters) {
     if (_prototype != null) {
-      return _prototype!.call(parameters);
+      return _prototype!.Call(parameters);
     }
 
     if (numberOfParameters != parameters.length) {
@@ -148,10 +146,6 @@ class NativeFunctionCall extends RuntimeObject {
   List<Value> _coerceValuesToSingleType(List<RuntimeObject> parametersIn) {
     ValueType valType = ValueType.Int;
 
-    // Find out what the output type is
-    // "higher level" types infect both so that binary operations
-    // use the same type on both sides. e.g. binary operation of
-    // int and float causes the int to be casted to a float.
     for (var obj in parametersIn) {
       var val = obj as Value;
       if (val.valueType.index > valType.index) {
@@ -159,11 +153,10 @@ class NativeFunctionCall extends RuntimeObject {
       }
     }
 
-    // Coerce to this chosen type
     var parametersOut = <Value>[];
 
     for (Value val in parametersIn.cast()) {
-      var castedValue = val.cast(valType);
+      var castedValue = val.Cast(valType);
       parametersOut.add(castedValue);
     }
 
@@ -172,30 +165,22 @@ class NativeFunctionCall extends RuntimeObject {
 
   NativeFunctionCall([String? name, int? numberOfParameters]) {
     if (numberOfParameters == null) {
-      generateNativeFunctionsIfNecessary();
+      GenerateNativeFunctionsIfNecessary();
     } else {
       _isPrototype = true;
-      _setNumberOfParameters(numberOfParameters);
+      _numberOfParameters = numberOfParameters;
     }
 
     if (name != null) _setName(name);
   }
 
-  static dynamic identity<T>(T t) {
+  static T Identity<T>(T t) {
     return t;
   }
 
-  static void generateNativeFunctionsIfNecessary() {
+  static void GenerateNativeFunctionsIfNecessary() {
     if (_nativeFunctions == null) {
       _nativeFunctions = <String, NativeFunctionCall>{};
-
-      // Why no bool operations?
-      // Before evaluation, all bools are coerced to ints in
-      // CoerceValuesToSingleType (see default value for valType at top).
-      // So, no operations are ever directly done in bools themselves.
-      // This also means that 1 == true works, since true is always converted
-      // to 1 first.
-      // However, many operations return a "native" bool (equals, etc).
 
       // Int operations
       AddIntBinaryOp(Add, (x, y) => x + y);
@@ -221,9 +206,9 @@ class NativeFunctionCall extends RuntimeObject {
 
       // Have to cast to float since you could do POW(2, -1)
       AddIntBinaryOp(Pow, (x, y) => pow(x, y));
-      AddIntUnaryOp(Floor, identity);
-      AddIntUnaryOp(Ceiling, identity);
-      AddIntUnaryOp(Int, identity);
+      AddIntUnaryOp(Floor, Identity);
+      AddIntUnaryOp(Ceiling, Identity);
+      AddIntUnaryOp(Int, Identity);
       AddIntUnaryOp(Float, (x) => x * 1.0);
 
       // Float operations
@@ -251,7 +236,7 @@ class NativeFunctionCall extends RuntimeObject {
       AddFloatUnaryOp(Floor, (x) => (x).floor());
       AddFloatUnaryOp(Ceiling, (x) => (x).ceil());
       AddFloatUnaryOp(Int, (x) => (x).floor());
-      AddFloatUnaryOp(Float, identity);
+      AddFloatUnaryOp(Float, Identity);
 
       // String operations
       AddStringBinaryOp(Add, (x, y) => x + y); // concat
@@ -280,8 +265,7 @@ class NativeFunctionCall extends RuntimeObject {
 
   static void AddOpToNativeFunc(
       String name, int args, ValueType valType, dynamic op) {
-    NativeFunctionCall? nativeFunc;
-    nativeFunc = _nativeFunctions![name];
+    NativeFunctionCall? nativeFunc = _nativeFunctions![name];
     if (nativeFunc == null) {
       nativeFunc = NativeFunctionCall(name, args);
       _nativeFunctions![name] = nativeFunc;

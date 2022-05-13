@@ -58,19 +58,19 @@ class Event extends Iterable<Function> {
     for (var fn in delegates) {
       switch (argsCount) {
         case 0:
-          fn.call();
+          fn();
           break;
         case 1:
-          fn.call(args[0]);
+          fn(args[0]);
           break;
         case 2:
-          fn.call(args[0], args[1]);
+          fn(args[0], args[1]);
           break;
         case 3:
-          fn.call(args[0], args[1], args[2]);
+          fn(args[0], args[1], args[2]);
           break;
         case 4:
-          fn.call(args[0], args[1], args[2], args[3]);
+          fn(args[0], args[1], args[2], args[3]);
           break;
       }
     }

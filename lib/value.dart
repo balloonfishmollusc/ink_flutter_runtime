@@ -45,7 +45,7 @@ abstract class Value<T> extends RuntimeObject {
   ValueType get valueType;
   bool get isTruthy;
 
-  Value cast(ValueType newType);
+  Value Cast(ValueType newType);
 
   @override
   RuntimeObject copy() => create(valueObject);
@@ -60,7 +60,7 @@ class BoolValue extends Value<bool> {
   BoolValue([bool value = false]) : super(value);
 
   @override
-  Value cast(ValueType newType) {
+  Value Cast(ValueType newType) {
     if (newType == valueType) {
       return this;
     }
@@ -91,7 +91,7 @@ class IntValue extends Value<int> {
   IntValue([int value = 0]) : super(value);
 
   @override
-  Value cast(ValueType newType) {
+  Value Cast(ValueType newType) {
     if (newType == valueType) {
       return this;
     }
@@ -122,7 +122,7 @@ class FloatValue extends Value<double> {
   FloatValue([double value = 0]) : super(value);
 
   @override
-  Value cast(ValueType newType) {
+  Value Cast(ValueType newType) {
     if (newType == valueType) {
       return this;
     }
@@ -164,7 +164,7 @@ class StringValue extends Value<String> {
   bool get isNonWhitespace => !isNewline && !isInlineWhitespace;
 
   @override
-  Value cast(ValueType newType) {
+  Value Cast(ValueType newType) {
     if (newType == valueType) {
       return this;
     }
@@ -186,7 +186,7 @@ class DivertTargetValue extends Value<Path?> {
   set targetPath(Path? value) => this.value = value;
 
   @override
-  Value cast(ValueType newType) {
+  Value Cast(ValueType newType) {
     if (newType == valueType) return this;
 
     throw badCastException(newType);
@@ -213,7 +213,7 @@ class VariablePointerValue extends Value<String?> {
   int contextIndex;
 
   @override
-  Value cast(ValueType newType) {
+  Value Cast(ValueType newType) {
     if (newType == valueType) return this;
 
     throw badCastException(newType);

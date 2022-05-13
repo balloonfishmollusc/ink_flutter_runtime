@@ -584,8 +584,8 @@ class StoryState {
       _currentFlow.name = kDefaultFlowName;
       _currentFlow.callStack.SetJsonToken(
           jObject["callstackThreads"] as Map<String, dynamic>, story);
-      _currentFlow.outputStream =
-          Json.JArrayToRuntimeObjList(jObject["outputStream"] as List<dynamic>);
+      _currentFlow.outputStream = Json.JArrayToRuntimeObjList<RuntimeObject>(
+          jObject["outputStream"] as List<dynamic>);
       _currentFlow.currentChoices = Json.JArrayToRuntimeObjList<Choice>(
           jObject["currentChoices"] as List<dynamic>);
 
@@ -601,8 +601,8 @@ class StoryState {
         .SetJsonToken(jObject["variablesState"] as Map<String, dynamic>);
     variablesState!.callStack = _currentFlow.callStack;
 
-    evaluationStack =
-        Json.JArrayToRuntimeObjList(jObject["evalStack"] as List<dynamic>);
+    evaluationStack = Json.JArrayToRuntimeObjList<RuntimeObject>(
+        jObject["evalStack"] as List<dynamic>);
 
     dynamic currentDivertTargetPath = jObject["currentDivertTarget"];
     if (currentDivertTargetPath != null) {
@@ -610,10 +610,8 @@ class StoryState {
       divertedPointer = story.PointerAtPath(divertPath);
     }
 
-    _visitCounts = Json.JObjectToIntDictionary(
-        jObject["visitCounts"] as Map<String, dynamic>);
-    _turnIndices = Json.JObjectToIntDictionary(
-        jObject["turnIndices"] as Map<String, dynamic>);
+    _visitCounts = jObject["visitCounts"].Cast();
+    _turnIndices = jObject["turnIndices"].Cast();
 
     currentTurnIndex = jObject["turnIdx"];
     storySeed = jObject["storySeed"];

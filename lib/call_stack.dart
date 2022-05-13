@@ -12,7 +12,7 @@ class CallStackElement {
   Pointer currentPointer;
 
   bool inExpressionEvaluation;
-  Map<String, RuntimeObject?> temporaryVariables = {};
+  Map<String, RuntimeObject> temporaryVariables = {};
   final PushPopType type;
 
   int evaluationStackHeightWhenPushed = 0;

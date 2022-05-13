@@ -1374,7 +1374,7 @@ class Story extends RuntimeObject {
     else if (contentObj is NativeFunctionCall) {
       var func = contentObj;
       var funcParams = state.PopEvaluationStackMulti(func.numberOfParameters);
-      var result = func.call(funcParams);
+      var result = func.Call(funcParams);
       state.PushEvaluationStack(result!);
       return true;
     }

@@ -1,9 +1,9 @@
+// reviewed
+
 import 'path.dart';
 import 'void.dart';
-
-import 'package:ink_flutter_runtime/divert.dart';
-import 'package:ink_flutter_runtime/addons/extra.dart';
-
+import 'divert.dart';
+import 'addons/extra.dart';
 import 'choice.dart';
 import 'choice_point.dart';
 import 'container.dart';
@@ -35,8 +35,8 @@ class Json {
     return list;
   }
 
-  static dynamic WriteDictionaryRuntimeObjs(
-      Map<String, RuntimeObject?> dictionary) {
+  static Map<String, dynamic> WriteDictionaryRuntimeObjs(
+      Map<String, RuntimeObject> dictionary) {
     var dict = <String, dynamic>{};
     for (var keyVal in dictionary.entries) {
       dict[keyVal.key] = WriteRuntimeObject(keyVal.value);
@@ -44,7 +44,7 @@ class Json {
     return dict;
   }
 
-  static dynamic WriteListRuntimeObjs(List<RuntimeObject> list) {
+  static List WriteListRuntimeObjs(List<RuntimeObject> list) {
     List<dynamic> ret = [];
     for (var val in list) {
       ret.add(WriteRuntimeObject(val));
@@ -52,17 +52,17 @@ class Json {
     return ret;
   }
 
-  static dynamic WriteIntDictionary(Map<String, int> dict) {
+  static Map<String, int> WriteIntDictionary(Map<String, int> dict) {
     return dict;
   }
 
-  static dynamic WriteRuntimeObject(RuntimeObject? obj) {
-    var container = obj?.csAs<Container>();
+  static dynamic WriteRuntimeObject(RuntimeObject obj) {
+    var container = obj.csAs<Container>();
     if (container != null) {
       return WriteRuntimeContainer(container);
     }
 
-    var divert = obj?.csAs<Divert>();
+    var divert = obj.csAs<Divert>();
     if (divert != null) {
       String divTypeKey = "->";
       if (divert.isExternal) {
@@ -94,7 +94,7 @@ class Json {
       return dict;
     }
 
-    var choicePoint = obj?.csAs<ChoicePoint>();
+    var choicePoint = obj.csAs<ChoicePoint>();
     if (choicePoint != null) {
       var dict = <String, dynamic>{};
       dict["*"] = choicePoint.pathStringOnChoice;
@@ -102,22 +102,22 @@ class Json {
       return dict;
     }
 
-    var boolVal = obj?.csAs<BoolValue>();
+    var boolVal = obj.csAs<BoolValue>();
     if (boolVal != null) {
       return boolVal.value;
     }
 
-    var intVal = obj?.csAs<IntValue>();
+    var intVal = obj.csAs<IntValue>();
     if (intVal != null) {
       return intVal.value;
     }
 
-    var floatVal = obj?.csAs<FloatValue>();
+    var floatVal = obj.csAs<FloatValue>();
     if (floatVal != null) {
       return floatVal.value;
     }
 
-    var strVal = obj?.csAs<StringValue>();
+    var strVal = obj.csAs<StringValue>();
     if (strVal != null) {
       if (strVal.isNewline) {
         return "\n";
@@ -126,14 +126,14 @@ class Json {
       }
     }
 
-    var divTargetVal = obj?.csAs<DivertTargetValue>();
+    var divTargetVal = obj.csAs<DivertTargetValue>();
     if (divTargetVal != null) {
       var dict = <String, dynamic>{};
       dict["^->"] = divTargetVal.value!.componentsString;
       return dict;
     }
 
-    var varPtrVal = obj?.csAs<VariablePointerValue>();
+    var varPtrVal = obj.csAs<VariablePointerValue>();
     if (varPtrVal != null) {
       var dict = <String, dynamic>{};
       dict["^var"] = varPtrVal.value;
@@ -141,17 +141,17 @@ class Json {
       return dict;
     }
 
-    var glue = obj?.csAs<Glue>();
+    var glue = obj.csAs<Glue>();
     if (glue != null) {
       return "<>";
     }
 
-    var controlCmd = obj?.csAs<ControlCommand>();
+    var controlCmd = obj.csAs<ControlCommand>();
     if (controlCmd != null) {
       return _controlCommandNames[controlCmd.commandType];
     }
 
-    var nativeFunc = obj?.csAs<NativeFunctionCall>();
+    var nativeFunc = obj.csAs<NativeFunctionCall>();
     if (nativeFunc != null) {
       var name = nativeFunc.name;
 
@@ -162,7 +162,7 @@ class Json {
     }
 
     // Variable reference
-    var varRef = obj?.csAs<VariableReference>();
+    var varRef = obj.csAs<VariableReference>();
     if (varRef != null) {
       var dict = <String, dynamic>{};
 
@@ -176,7 +176,7 @@ class Json {
     }
 
     // Variable assignment
-    var varAss = obj?.csAs<VariableAssignment>();
+    var varAss = obj.csAs<VariableAssignment>();
     if (varAss != null) {
       var dict = <String, dynamic>{};
 
@@ -189,13 +189,13 @@ class Json {
     }
 
     // Void
-    var voidObj = obj?.csAs<Void>();
+    var voidObj = obj.csAs<Void>();
     if (voidObj != null) {
       return "void";
     }
 
     // Tag
-    var tag = obj?.csAs<Tag>();
+    var tag = obj.csAs<Tag>();
     if (tag != null) {
       var dict = <String, dynamic>{};
       dict["#"] = tag.text;
@@ -203,7 +203,7 @@ class Json {
     }
 
     // Used when serialising save state only
-    var choice = obj?.csAs<Choice>();
+    var choice = obj.csAs<Choice>();
     if (choice != null) {
       return WriteChoice(choice);
     }
@@ -212,22 +212,14 @@ class Json {
         "Failed to write runtime dynamic to JSON: " + obj.toString());
   }
 
-  static Map<String, RuntimeObject?> JObjectToDictionaryRuntimeObjs(
+  static Map<String, RuntimeObject> JObjectToDictionaryRuntimeObjs(
       Map<String, dynamic> jObject) {
-    var dict = <String, RuntimeObject?>{};
+    var dict = <String, RuntimeObject>{};
 
     for (var keyVal in jObject.entries) {
-      dict[keyVal.key] = JTokenToRuntimeObject(keyVal.value);
+      dict[keyVal.key] = JTokenToRuntimeObject(keyVal.value)!;
     }
 
-    return dict;
-  }
-
-  static Map<String, int> JObjectToIntDictionary(Map<String, dynamic> jObject) {
-    var dict = <String, int>{};
-    for (var keyVal in jObject.entries) {
-      dict[keyVal.key] = keyVal.value as int;
-    }
     return dict;
   }
 
@@ -297,7 +289,6 @@ class Json {
       if (str == "<>") return Glue();
 
       // Control commands (would looking up in a hash set be faster?)
-
       for (int i = 0; i < _controlCommandNames.length; ++i) {
         String cmdName = _controlCommandNames[i]!;
         if (str == cmdName) {
@@ -310,8 +301,8 @@ class Json {
       // we know it's not a string, we can convert back to the proper
       // symbol for the operator.
       if (str == "L^") str = "^";
-      if (NativeFunctionCall.callExistsWithName(str)) {
-        return NativeFunctionCall.callWithName(str);
+      if (NativeFunctionCall.CallExistsWithName(str)) {
+        return NativeFunctionCall.CallWithName(str);
       }
 
       // Pop
@@ -389,7 +380,7 @@ class Json {
         divert.stackPushType = divPushType;
         divert.isExternal = external;
 
-        String target = propValue.ToString();
+        String target = propValue.toString();
 
         propValue = obj["var"];
         if (propValue != null) {
@@ -413,7 +404,7 @@ class Json {
       propValue = obj["*"];
       if (propValue != null) {
         var choice = ChoicePoint();
-        choice.pathStringOnChoice = propValue.ToString();
+        choice.pathStringOnChoice = propValue.toString();
 
         propValue = obj["flg"];
         if (propValue != null) choice.flags = propValue as int;
@@ -429,7 +420,7 @@ class Json {
         propValue = obj["CNT?"];
         if (propValue != null) {
           var readCountVarRef = VariableReference();
-          readCountVarRef.pathStringForCount = propValue.ToString();
+          readCountVarRef.pathStringForCount = propValue.toString();
           return readCountVarRef;
         }
       }
@@ -451,7 +442,7 @@ class Json {
       }
 
       if (isVarAss) {
-        var varName = propValue.ToString();
+        var varName = propValue.toString();
         propValue = obj["re"];
         var isNewDecl = !(propValue != null);
         var varAss = VariableAssignment(varName, isNewDecl);
@@ -470,7 +461,7 @@ class Json {
     }
 
     // Array is always a Runtime.Container
-    if (token is List<dynamic>) {
+    if (token is List) {
       return JArrayToContainer(token);
     }
 
@@ -487,11 +478,6 @@ class Json {
       ret.add(WriteRuntimeObject(c));
     }
 
-    // Container is always an array [...]
-    // But the final element is always either:
-    //  - a dictionary containing the named content, as well as possibly
-    //    the key "#" with the count flags
-    //  - null, if neither of the above
     var namedOnlyContent = container.namedOnlyContent;
     var countFlags = container.countFlags;
     var hasNameProperty = container.name != null && !withoutName;
@@ -526,12 +512,8 @@ class Json {
 
   static Container JArrayToContainer(List<dynamic> jArray) {
     var container = Container();
-    container.content = JArrayToRuntimeObjList(jArray, true);
+    container.content = JArrayToRuntimeObjList<RuntimeObject>(jArray, true);
 
-    // Final object in the array is always a combination of
-    //  - named content
-    //  - a "#f" key with the countFlags
-    // (if either exists at all, otherwise null)
     var terminatingObj = jArray.last.tryCast<Map<String, dynamic>>();
     if (terminatingObj != null) {
       var namedOnlyContent = <String, RuntimeObject?>{};
@@ -565,7 +547,7 @@ class Json {
     return choice;
   }
 
-  static dynamic WriteChoice(Choice choice) {
+  static Map<String, dynamic> WriteChoice(Choice choice) {
     var dict = <String, dynamic>{};
     dict["text"] = choice.text;
     dict["index"] = choice.index;

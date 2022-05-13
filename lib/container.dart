@@ -1,10 +1,10 @@
-import 'package:ink_flutter_runtime/i_named_content.dart';
+// reviewed
 
+import 'i_named_content.dart';
 import 'addons/extra.dart';
 import 'runtime_object.dart';
 import 'path.dart';
 import 'search_result.dart';
-import 'value.dart';
 
 class Container extends RuntimeObject implements INamedContent {
   @override
@@ -12,14 +12,13 @@ class Container extends RuntimeObject implements INamedContent {
 
   @override
   String? get name => _name;
-
   set name(String? value) => _name = value;
 
   String? _name;
 
   final List<RuntimeObject> _content = [];
   List<RuntimeObject> get content => _content;
-  set content(value) => addContent(value);
+  set content(value) => AddContent(value);
 
   final Map<String, INamedContent> namedContent = {};
 
@@ -30,11 +29,9 @@ class Container extends RuntimeObject implements INamedContent {
     }
 
     for (var c in content) {
-      if (c is INamedContent) {
-        var named = c as INamedContent;
-        if (named.hasValidName) {
-          namedOnlyContentDict.remove(named.name);
-        }
+      var named = c.csAs<INamedContent>();
+      if (named != null && named.hasValidName) {
+        namedOnlyContentDict.remove(named.name);
       }
     }
 
@@ -54,10 +51,8 @@ class Container extends RuntimeObject implements INamedContent {
     if (value == null) return;
 
     for (var kvPair in value.entries) {
-      if (kvPair.value is INamedContent) {
-        var named = kvPair.value as INamedContent;
-        addToNamedContentOnly(named);
-      }
+      var named = kvPair.value?.csAs<INamedContent>();
+      if (named != null) AddToNamedContentOnly(named);
     }
   }
 
@@ -71,11 +66,6 @@ class Container extends RuntimeObject implements INamedContent {
     if (turnIndexShouldBeCounted) flags |= CountFlags.Turns;
     if (countingAtStartOnly) flags |= CountFlags.CountStartOnly;
 
-    // If we're only storing CountStartOnly, it serves no purpose,
-    // since it's dependent on the other two to be used at all.
-    // (e.g. for setting the fact that *if* a gather or choice's
-    // content is counted, then is should only be counter at the start)
-    // So this is just an optimisation for storage.
     if (flags == CountFlags.CountStartOnly) {
       flags = 0;
     }
@@ -90,27 +80,19 @@ class Container extends RuntimeObject implements INamedContent {
     if ((flag & CountFlags.CountStartOnly) > 0) countingAtStartOnly = true;
   }
 
-  Path? _pathToFirstLeafContent;
-
-  Path? get pathToFirstLeafContent {
-    _pathToFirstLeafContent ??=
-        path.PathByAppendingPath(internalPathToFirstLeafContent!);
-    return _pathToFirstLeafContent;
-  }
-
   Path? get internalPathToFirstLeafContent {
-    List<PathComponent> components = <PathComponent>[];
+    List<PathComponent> components = [];
     Container? container = this;
     while (container != null) {
       if (container.content.isNotEmpty) {
         components.add(PathComponent.new1(0));
-        container = container.content[0] as Container;
+        container = container.content[0].csAs<Container>();
       }
     }
     return Path.new2(components);
   }
 
-  void addContent(RuntimeObject contentObj) {
+  void AddContent(RuntimeObject contentObj) {
     content.add(contentObj);
 
     if (contentObj.parent != null) {
@@ -119,16 +101,16 @@ class Container extends RuntimeObject implements INamedContent {
 
     contentObj.parent = this;
 
-    tryAddNamedContent(contentObj);
+    TryAddNamedContent(contentObj);
   }
 
-  void addContents(Iterable<RuntimeObject> contentList) {
+  void AddContents(Iterable<RuntimeObject> contentList) {
     for (var c in contentList) {
-      addContent(c);
+      AddContent(c);
     }
   }
 
-  void insertContent(RuntimeObject contentObj, int index) {
+  void InsertContent(RuntimeObject contentObj, int index) {
     content.insert(index, contentObj);
 
     if (contentObj.parent != null) {
@@ -137,19 +119,17 @@ class Container extends RuntimeObject implements INamedContent {
 
     contentObj.parent = this;
 
-    tryAddNamedContent(contentObj);
+    TryAddNamedContent(contentObj);
   }
 
-  void tryAddNamedContent(RuntimeObject contentObj) {
-    if (contentObj is INamedContent) {
-      var namedContentObj = contentObj as INamedContent;
-      if (namedContentObj.hasValidName) {
-        addToNamedContentOnly(namedContentObj);
-      }
+  void TryAddNamedContent(RuntimeObject contentObj) {
+    var namedContentObj = contentObj.csAs<INamedContent>();
+    if (namedContentObj != null && namedContentObj.hasValidName) {
+      AddToNamedContentOnly(namedContentObj);
     }
   }
 
-  void addToNamedContentOnly(INamedContent namedContentObj) {
+  void AddToNamedContentOnly(INamedContent namedContentObj) {
     assert(namedContentObj is RuntimeObject,
         "Can only add Runtime.Objects to a Runtime.Container");
     var runtimeObj = namedContentObj as RuntimeObject;
@@ -158,23 +138,19 @@ class Container extends RuntimeObject implements INamedContent {
     namedContent[namedContentObj.name!] = namedContentObj;
   }
 
-  void addContentsOfContainer(Container otherContainer) {
+  void AddContentsOfContainer(Container otherContainer) {
     content.addAll(otherContainer.content);
     for (var obj in otherContainer.content) {
       obj.parent = this;
-      tryAddNamedContent(obj);
+      TryAddNamedContent(obj);
     }
   }
 
-  RuntimeObject? _contentWithPathComponent(PathComponent component) {
+  RuntimeObject? ContentWithPathComponent(PathComponent component) {
     if (component.isIndex) {
       if (component.index >= 0 && component.index < content.length) {
         return content[component.index];
-      }
-
-      // When path is out of range, quietly return nil
-      // (useful as we step/increment forwards through content)
-      else {
+      } else {
         return null;
       }
     } else if (component.isParent) {
@@ -208,7 +184,7 @@ class Container extends RuntimeObject implements INamedContent {
         break;
       }
 
-      var foundObj = currentContainer._contentWithPathComponent(comp);
+      var foundObj = currentContainer.ContentWithPathComponent(comp);
 
       // Couldn't resolve entire path?
       if (foundObj == null) {
@@ -217,101 +193,12 @@ class Container extends RuntimeObject implements INamedContent {
       }
 
       currentObj = foundObj;
-      currentContainer = foundObj as Container;
+      currentContainer = foundObj.csAs<Container>();
     }
 
     result.obj = currentObj;
 
-    return result.clone() as SearchResult;
-  }
-
-  void buildStringOfHierarchy3(
-      StringBuilder sb, int indentation, RuntimeObject? pointedObj) {
-    var appendIndentation = () {
-      const int spacesPerIndent = 4;
-      for (int i = 0; i < spacesPerIndent * indentation; ++i) {
-        sb.add(" ");
-      }
-    };
-
-    appendIndentation();
-    sb.add("[");
-
-    if (hasValidName) {
-      sb.add(" ($name)");
-    }
-
-    if (this == pointedObj) {
-      sb.add("  <---");
-    }
-
-    sb.add("\n");
-
-    indentation++;
-
-    for (int i = 0; i < content.length; ++i) {
-      var obj = content[i];
-
-      if (obj is Container) {
-        Container container = obj;
-        container.buildStringOfHierarchy3(sb, indentation, pointedObj);
-      } else {
-        appendIndentation();
-        if (obj is StringValue) {
-          sb.add("\"");
-          sb.add(obj.toString().replaceAll("\n", "\\n"));
-          sb.add("\"");
-        } else {
-          sb.add(obj.toString());
-        }
-      }
-
-      if (i != content.length - 1) {
-        sb.add(",");
-      }
-
-      if (obj is! Container && obj == pointedObj) {
-        sb.add("  <---");
-      }
-
-      sb.add("\n");
-    }
-
-    var onlyNamed = <String, INamedContent>{};
-
-    for (var objKV in namedContent.entries) {
-      if (content.contains(objKV.value as RuntimeObject)) {
-        continue;
-      } else {
-        onlyNamed[objKV.key] = objKV.value;
-      }
-    }
-
-    if (onlyNamed.isNotEmpty) {
-      appendIndentation();
-      sb.add("-- named: --\n");
-
-      for (var objKV in onlyNamed.entries) {
-        assert(objKV.value is Container, "Can only print out named Containers");
-        var container = objKV.value as Container;
-        container.buildStringOfHierarchy3(sb, indentation, pointedObj);
-
-        sb.add("\n");
-      }
-    }
-
-    indentation--;
-
-    appendIndentation();
-    sb.add("]");
-  }
-
-  String buildStringOfHierarchy() {
-    var sb = StringBuilder();
-
-    buildStringOfHierarchy3(sb, 0, null);
-
-    return sb.toString();
+    return result;
   }
 }
 

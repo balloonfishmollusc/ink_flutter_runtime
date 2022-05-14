@@ -1,3 +1,5 @@
+// reviewed
+
 import 'call_stack.dart';
 import 'addons/extra.dart';
 import 'json_serialisation.dart';
@@ -14,17 +16,13 @@ class VariablesState extends Iterable<String> {
   StatePatch? patch;
   bool batchObservingVariableChanges = false;
 
-  operator [](String? variableName) {
+  operator [](String variableName) {
     RuntimeObject? varContents = patch?.globals[variableName];
 
     if (patch != null && varContents != null) {
       return (varContents as Value).valueObject;
     }
 
-    // Search main dictionary first.
-    // If it's not found, it might be because the story content has changed,
-    // and the original default value hasn't be instantiated.
-    // Should really warn somehow, but it's difficult to see how...!
     varContents = _globalVariables[variableName];
     varContents ??= _defaultGlobalVariables[variableName];
     if (varContents != null) {
@@ -79,44 +77,13 @@ class VariablesState extends Iterable<String> {
     return dict;
   }
 
-  bool RuntimeObjectsEqual(RuntimeObject obj1, RuntimeObject obj2) {
-    if (obj1.runtimeType != obj2.runtimeType) return false;
-
-    // Perform equality on int/float/bool manually to avoid boxing
-    var boolVal = obj1.csAs<BoolValue>();
-    if (boolVal != null) {
-      return boolVal.value == (obj2 as BoolValue).value;
-    }
-
-    var intVal = obj1.csAs<IntValue>();
-    if (intVal != null) {
-      return intVal.value == (obj2 as IntValue).value;
-    }
-
-    var floatVal = obj1.csAs<FloatValue>();
-    if (floatVal != null) {
-      return floatVal.value == (obj2 as FloatValue).value;
-    }
-
-    // Other Value type (using proper Equals: list, string, divert path)
-    var val1 = obj1.csAs<Value>();
-    var val2 = obj2.csAs<Value>();
-    if (val1 != null) {
-      return val1.valueObject == val2?.valueObject;
-    }
-
-    throw Exception(
-        "FastRoughDefinitelyEquals: Unsupported runtime object type: " +
-            obj1.runtimeType.toString());
-  }
-
   RuntimeObject? TryGetDefaultVariableValue(String name) {
     return _defaultGlobalVariables[name];
   }
 
   bool GlobalVariableExistsWithName(String name) {
     return _globalVariables.containsKey(name) ||
-        true && _defaultGlobalVariables.containsKey(name);
+        _defaultGlobalVariables.containsKey(name);
   }
 
   RuntimeObject? GetVariableWithName(String name, [int contextIndex = -1]) {
@@ -142,16 +109,9 @@ class VariablesState extends Iterable<String> {
       varValue = _globalVariables[name];
       if (varValue != null) return varValue;
 
-      // Getting variables can actually happen during globals set up since you can do
-      //  VAR x = A_LIST_ITEM
-      // So _defaultGlobalVariables may be null.
-      // We need to do this check though in case a new global is added, so we need to
-      // revert to the default globals dictionary since an initial value hasn't yet been set.
       varValue = _defaultGlobalVariables[name];
 
-      if (varValue != null) {
-        return varValue;
-      }
+      if (varValue != null) return varValue;
     }
 
     // Temporary
@@ -211,13 +171,12 @@ class VariablesState extends Iterable<String> {
 
   void SnapshotDefaultGlobals() {
     _defaultGlobalVariables.clear();
-    _defaultGlobalVariables
-        .addAll(Map<String, RuntimeObject>.of(_globalVariables));
+    _defaultGlobalVariables.addAll(Map.of(_globalVariables));
   }
 
   void SetGlobal(String variableName, RuntimeObject value) {
     RuntimeObject? oldValue = patch?.globals[variableName];
-    if (patch == null || !(oldValue != null)) {
+    if (patch == null || oldValue == null) {
       oldValue = _globalVariables[variableName];
     }
 
@@ -228,9 +187,6 @@ class VariablesState extends Iterable<String> {
     }
   }
 
-  // Given a variable pointer with just the name of the target known, resolve to a variable
-  // pointer that more specifically points to the exact instance: whether it's global,
-  // or the exact position of a temporary on the callstack.
   VariablePointerValue ResolveVariablePointer(VariablePointerValue varPointer) {
     int contextIndex = varPointer.contextIndex;
 
@@ -241,25 +197,15 @@ class VariablesState extends Iterable<String> {
     var valueOfVariablePointedTo =
         GetRawVariableWithName(varPointer.variableName, contextIndex);
 
-    // Extra layer of indirection:
-    // When accessing a pointer to a pointer (e.g. when calling nested or
-    // recursive functions that take a variable references, ensure we don't create
-    // a chain of indirection by just returning the final target.
     var doubleRedirectionPointer =
         valueOfVariablePointedTo?.csAs<VariablePointerValue>();
     if (doubleRedirectionPointer != null) {
       return doubleRedirectionPointer;
-    }
-
-    // Make copy of the variable pointer so we're not using the value direct from
-    // the runtime. Temporary must be local to the current scope.
-    else {
+    } else {
       return VariablePointerValue(varPointer.variableName, contextIndex);
     }
   }
 
-  // 0  if named variable is global
-  // 1+ if named variable is a temporary in a particular call stack element
   int GetContextIndexOfVariableNamed(String varName) {
     if (GlobalVariableExistsWithName(varName)) return 0;
 

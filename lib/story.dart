@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
-
-import 'package:ink_flutter_runtime/choice_point.dart';
-import 'package:ink_flutter_runtime/control_command.dart';
+import 'choice_point.dart';
+import 'control_command.dart';
 import 'addons/stack.dart';
-
 import 'choice.dart';
 import 'container.dart';
 import 'debug_metadata.dart';

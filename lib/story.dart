@@ -1027,7 +1027,7 @@ class Story extends RuntimeObject {
             outputStreamLengthWithPushed: state.outputStream.length);
       }
 
-      if (state.divertedPointer!.isNull && !currentDivert.isExternal) {
+      if (state.divertedPointer.isNull && !currentDivert.isExternal) {
         // Human readable name available - runtime divert is part of a hard-written divert that to missing content
         if (currentDivert.debugMetadata?.sourceName != null) {
           Error("Divert target doesn't exist: " +
@@ -1736,8 +1736,8 @@ class Story extends RuntimeObject {
     state.previousPointer = state.currentPointer;
 
     // Divert step?
-    if (!state.divertedPointer!.isNull) {
-      state.currentPointer = state.divertedPointer!;
+    if (!state.divertedPointer.isNull) {
+      state.currentPointer = state.divertedPointer;
       state.divertedPointer = Pointer.Null;
 
       // Internally uses state.previousContentObject and state.currentContentObject

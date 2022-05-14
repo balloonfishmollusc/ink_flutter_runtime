@@ -437,21 +437,18 @@ class StoryState {
 
   void LoadJsonObj(Map<String, dynamic> jObject) {
     dynamic jSaveVersion = jObject["inkSaveVersion"];
-    if (!(jSaveVersion != null)) {
+    if (jSaveVersion == null) {
       throw Exception("ink save format incorrect, can't load.");
     } else if (jSaveVersion as int < kMinCompatibleLoadVersion) {
       throw Exception(
           "Ink save format isn't compatible with the current version (saw '$jSaveVersion', but minimum is $kMinCompatibleLoadVersion), so can't load.");
     }
 
-    // Flows: Always exists in latest format (even if there's just one default)
-    // but this dictionary doesn't exist in prev format
     dynamic flowsObj;
     flowsObj = jObject["flows"];
     if (flowsObj != null) {
       Map<String, dynamic> flowsObjDict = flowsObj;
 
-      // Single default flow
       if (flowsObjDict.length == 1) {
         _namedFlows = null;
       } else if (_namedFlows == null) {
@@ -460,12 +457,10 @@ class StoryState {
         _namedFlows!.clear();
       }
 
-      // Load up each flow (there may only be one)
       for (var namedFlowObj in flowsObjDict.entries) {
         var name = namedFlowObj.key;
         Map<String, dynamic> flowObj = namedFlowObj.value;
 
-        // Load up this flow using JSON data
         var flow = Flow(name, story, flowObj);
 
         if (flowsObjDict.length == 1) {
@@ -483,18 +478,7 @@ class StoryState {
 
     // Old format: individually load up callstack, output stream, choices in current/default flow
     else {
-      _namedFlows = null;
-      _currentFlow.name = kDefaultFlowName;
-      _currentFlow.callStack.SetJsonToken(
-          jObject["callstackThreads"] as Map<String, dynamic>, story);
-      _currentFlow.outputStream = Json.JArrayToRuntimeObjList<RuntimeObject>(
-          jObject["outputStream"] as List<dynamic>);
-      _currentFlow.currentChoices = Json.JArrayToRuntimeObjList<Choice>(
-          jObject["currentChoices"] as List<dynamic>);
-
-      dynamic jChoiceThreadsObj = jObject["choiceThreads"];
-      _currentFlow.LoadFlowChoiceThreads(
-          jChoiceThreadsObj as Map<String, dynamic>, story);
+      throw Exception("Old format is not supported.");
     }
 
     OutputStreamDirty();
@@ -505,7 +489,7 @@ class StoryState {
     variablesState!.callStack = _currentFlow.callStack;
 
     evaluationStack = Json.JArrayToRuntimeObjList<RuntimeObject>(
-        jObject["evalStack"] as List<dynamic>);
+        jObject["evalStack"] as List);
 
     dynamic currentDivertTargetPath = jObject["currentDivertTarget"];
     if (currentDivertTargetPath != null) {
@@ -513,8 +497,8 @@ class StoryState {
       divertedPointer = story.PointerAtPath(divertPath);
     }
 
-    _visitCounts = jObject["visitCounts"].Cast();
-    _turnIndices = jObject["turnIndices"].Cast();
+    _visitCounts = jObject["visitCounts"].cast();
+    _turnIndices = jObject["turnIndices"].cast();
 
     currentTurnIndex = jObject["turnIdx"];
     storySeed = jObject["storySeed"];
@@ -539,8 +523,6 @@ class StoryState {
     OutputStreamDirty();
   }
 
-  // Push to output stream, but split out newlines in text for consistency
-  // in dealing with them later.
   void PushToOutputStream(RuntimeObject obj) {
     var text = obj.csAs<StringValue>();
     if (text != null) {
@@ -633,8 +615,7 @@ class StoryState {
     }
 
     if (innerStrEnd > innerStrStart) {
-      var innerStrText =
-          str.substring(innerStrStart, innerStrEnd - innerStrStart);
+      var innerStrText = str.substring(innerStrStart, innerStrEnd);
       listTexts.add(StringValue(innerStrText));
     }
 
@@ -642,8 +623,8 @@ class StoryState {
       listTexts.add(StringValue("\n"));
       if (tailLastNewlineIdx < str.length - 1) {
         int numSpaces = (str.length - tailLastNewlineIdx) - 1;
-        var trailingSpaces =
-            StringValue(str.substring(tailLastNewlineIdx + 1, numSpaces));
+        var trailingSpaces = StringValue(str.substring(
+            tailLastNewlineIdx + 1, tailLastNewlineIdx + 1 + numSpaces));
         listTexts.add(trailingSpaces);
       }
     }

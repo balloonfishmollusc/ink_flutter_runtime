@@ -68,7 +68,7 @@ class NativeFunctionCall extends RuntimeObject {
 
   int _numberOfParameters = 0;
 
-  RuntimeObject? Call(List<RuntimeObject> parameters) {
+  RuntimeObject Call(List<RuntimeObject> parameters) {
     if (_prototype != null) {
       return _prototype!.Call(parameters);
     }
@@ -97,7 +97,7 @@ class NativeFunctionCall extends RuntimeObject {
       return _call<Path>(coercedParams);
     }
 
-    return null;
+    throw Exception("NativeFunctionCall failed.");
   }
 
   Value _call<T>(List<Value> parametersOfSingleType) {

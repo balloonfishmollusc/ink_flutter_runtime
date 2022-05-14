@@ -20,48 +20,21 @@ import 'variables_state.dart';
 import 'void.dart';
 
 class StoryState {
-  /// <summary>
-  /// The current version of the state save file JSON-based format.
-  /// </summary>
-  static const int kInkSaveStateVersion =
-      9; // new: multi-flows, but backward compatible
+  static const int kInkSaveStateVersion = 9;
   static const int kMinCompatibleLoadVersion = 8;
 
-  /// <summary>
-  /// Callback for when a state is loaded
-  /// </summary>
   Event onDidLoadState = Event(0);
 
-  /// <summary>
-  /// Exports the current state to json format, in order to save the game.
-  /// </summary>
-  /// <returns>The save state in json format.</returns>
   String ToJson() {
     return jsonEncode(WriteJson() as Map<String, dynamic>);
   }
 
-  /// <summary>
-  /// Loads a previously saved state in JSON format.
-  /// </summary>
-  /// <param name="json">The JSON String to load.</param>
   void LoadJson(String json) {
     var jObject = jsonDecode(json);
     LoadJsonObj(jObject);
     onDidLoadState.fire();
   }
 
-  /// <summary>
-  /// Gets the visit/read count of a particular Container at the given path.
-  /// For a knot or stitch, that path String will be in the form:
-  ///
-  ///     knot
-  ///     knot.stitch
-  ///
-  /// </summary>
-  /// <returns>The number of times the specific knot or stitch has
-  /// been enountered by the ink engine.</returns>
-  /// <param name="pathString">The dot-separated path String of
-  /// the specific knot or stitch.</param>
   int VisitCountAtPathString(String pathString) {
     int? visitCountOut;
 
@@ -84,7 +57,7 @@ class StoryState {
   int VisitCountForContainer(Container container) {
     if (!container.visitsShouldBeCounted) {
       story.Error(
-          "Read count for target (${container.name} - on $container.debugMetadata) unknown.");
+          "Read count for target (${container.name} - on ${container.debugMetadata}) unknown.");
       return 0;
     }
 
@@ -95,7 +68,7 @@ class StoryState {
 
     var containerPathStr = container.path.toString();
     count = _visitCounts[containerPathStr];
-    return count!;
+    return count ?? 0;
   }
 
   void IncrementVisitCountForContainer(Container container) {
@@ -108,7 +81,7 @@ class StoryState {
 
     int count = 0;
     var containerPathStr = container.path.toString();
-    count = _visitCounts[containerPathStr]!;
+    count = _visitCounts[containerPathStr] ?? 0;
     count++;
     _visitCounts[containerPathStr] = count;
   }
@@ -129,7 +102,7 @@ class StoryState {
           "TURNS_SINCE() for target (${container.name} - on ${container.debugMetadata}) unknown.");
     }
 
-    int? index = 0;
+    int? index;
 
     index = _patch?.turnIndices[container];
     if (_patch != null && index != null) {
@@ -154,26 +127,19 @@ class StoryState {
   List<RuntimeObject> get outputStream => _currentFlow.outputStream;
 
   List<Choice> get currentChoices {
-    // If we can continue generating text content rather than choices,
-    // then we reflect the choice list as being empty, since choices
-    // should always come at the end.
     if (canContinue) return [];
     return _currentFlow.currentChoices;
   }
 
   List<Choice> get generatedChoices => _currentFlow.currentChoices;
 
-  // TODO: Consider removing currentErrors / currentWarnings altogether
-  // and relying on client error handler code immediately handling StoryExceptions etc
-  // Or is there a specific reason we need to collect potentially multiple
-  // errors before throwing/exiting?
   final List<String> currentErrors = [];
   final List<String> currentWarnings = [];
   VariablesState? variablesState;
   CallStack get callStack => _currentFlow.callStack;
 
   List<RuntimeObject> evaluationStack = [];
-  Pointer? divertedPointer;
+  Pointer divertedPointer = Pointer.Null;
 
   int currentTurnIndex = 0;
   int storySeed = 0;
@@ -187,7 +153,7 @@ class StoryState {
   /// </summary>
   String? get currentPathString {
     var pointer = currentPointer;
-    if (pointer.isNull != false) {
+    if (pointer.isNull) {
       return null;
     } else {
       return pointer.path.toString();
@@ -206,7 +172,7 @@ class StoryState {
     callStack.currentThread.previousPointer = value;
   }
 
-  bool get canContinue => currentPointer.isNull && !hasError;
+  bool get canContinue => !currentPointer.isNull && !hasError;
 
   bool get hasError => currentErrors.isNotEmpty;
 
@@ -223,7 +189,7 @@ class StoryState {
         }
       }
 
-      _currentText = CleanOutputWhitespace(sb.toString());
+      _currentText = sb.toString().trim();
 
       _outputStreamTextDirty = false;
     }
@@ -232,41 +198,6 @@ class StoryState {
   }
 
   String? _currentText;
-
-  // Cleans inline whitespace in the following way:
-  //  - Removes all whitespace from the start and end of line (including just before a \n)
-  //  - Turns all consecutive space and tab runs into single spaces (HTML style)
-  String CleanOutputWhitespace(String str) {
-    var sb = StringBuilder();
-
-    int currentWhitespaceStart = -1;
-    int startOfLine = 0;
-
-    for (int i = 0; i < str.length; i++) {
-      var c = str[i];
-
-      bool isInlineWhitespace = c == ' ' || c == '\t';
-
-      if (isInlineWhitespace && currentWhitespaceStart == -1) {
-        currentWhitespaceStart = i;
-      }
-
-      if (!isInlineWhitespace) {
-        if (c != '\n' &&
-            currentWhitespaceStart > 0 &&
-            currentWhitespaceStart != startOfLine) {
-          sb.add(' ');
-        }
-        currentWhitespaceStart = -1;
-      }
-
-      if (c == '\n') startOfLine = i + 1;
-
-      if (!isInlineWhitespace) sb.add(c);
-    }
-
-    return sb.toString();
-  }
 
   List<String> get currentTags {
     if (_outputStreamTagsDirty) {
@@ -324,8 +255,6 @@ class StoryState {
     OutputStreamDirty();
     _aliveFlowNamesDirty = true;
 
-    evaluationStack = <RuntimeObject>[];
-
     variablesState = VariablesState(callStack);
 
     currentTurnIndex = -1;
@@ -343,11 +272,7 @@ class StoryState {
         Pointer.StartOf(story.mainContentContainer);
   }
 
-  void SwitchFlow_Internal(String? flowName) {
-    if (flowName == null) {
-      throw Exception("Must pass a non-null String to Story.SwitchFlow");
-    }
-
+  void SwitchFlow_Internal(String flowName) {
     if (_namedFlows == null) {
       _namedFlows = <String, Flow>{};
       _namedFlows![kDefaultFlowName] = _currentFlow;
@@ -359,7 +284,7 @@ class StoryState {
 
     Flow? flow;
     flow = _namedFlows![flowName];
-    if (!(flow != null)) {
+    if (flow == null) {
       flow = Flow(flowName, story);
       _namedFlows![flowName] = flow;
       _aliveFlowNamesDirty = true;
@@ -368,7 +293,6 @@ class StoryState {
     _currentFlow = flow;
     variablesState!.callStack = _currentFlow.callStack;
 
-    // Cause text to be regenerated from output stream if necessary
     OutputStreamDirty();
   }
 
@@ -382,7 +306,6 @@ class StoryState {
       throw Exception("Cannot destroy default flow");
     }
 
-    // If we're currently in the flow that's being removed, switch back to default
     if (_currentFlow.name == flowName) {
       SwitchToDefaultFlow_Internal();
     }
@@ -391,28 +314,17 @@ class StoryState {
     _aliveFlowNamesDirty = true;
   }
 
-  // Warning: Any RuntimeObject content referenced within the StoryState will
-  // be re-referenced rather than cloned. This is generally okay though since
-  // RuntimeObjects are treated as immutable after they've been set up.
-  // (e.g. we don't edit a Runtime.StringValue after it's been created an added.)
-  // I wonder if there's a sensible way to enforce that..??
   StoryState CopyAndStartPatching() {
     var copy = StoryState(story);
 
     copy._patch = StatePatch(_patch);
 
-    // Hijack the default flow to become a copy of our current one
-    // If the patch is applied, then this flow will replace the old one in _namedFlows
     copy._currentFlow.name = _currentFlow.name;
     copy._currentFlow.callStack = CallStack.new2(_currentFlow.callStack);
     copy._currentFlow.currentChoices.addAll(_currentFlow.currentChoices);
     copy._currentFlow.outputStream.addAll(_currentFlow.outputStream);
     copy.OutputStreamDirty();
 
-    // The copy of the state has its own copy of the named flows dictionary,
-    // except with the current flow replaced with the copy above
-    // (Assuming we're in multi-flow mode at all. If we're not then
-    // the above copy is simply the default flow copy and we're done)
     if (_namedFlows != null) {
       copy._namedFlows = <String, Flow>{};
       for (var namedFlow in _namedFlows!.entries) {
@@ -431,23 +343,18 @@ class StoryState {
       copy.currentWarnings.addAll(currentWarnings);
     }
 
-    // ref copy - exactly the same variables state!
-    // we're expecting not to read it only while in patch mode
-    // (though the callstack will be modified)
     copy.variablesState = variablesState;
     copy.variablesState!.callStack = copy.callStack;
     copy.variablesState!.patch = copy._patch;
 
     copy.evaluationStack.addAll(evaluationStack);
 
-    if (!divertedPointer!.isNull) {
+    if (!divertedPointer.isNull) {
       copy.divertedPointer = divertedPointer;
     }
 
     copy.previousPointer = previousPointer;
 
-    // visit counts and turn indicies will be read only, not modified
-    // while in patch mode
     copy._visitCounts = _visitCounts;
     copy._turnIndices = _turnIndices;
 
@@ -461,10 +368,6 @@ class StoryState {
   }
 
   void RestoreAfterPatch() {
-    // VariablesState was being borrowed by the patched
-    // state, so restore it with our own callstack.
-    // _patch will be null normally, but if you're in the
-    // middle of a save, it may contain a _patch for save purpsoes.
     variablesState!.callStack = callStack;
     variablesState!.patch = _patch; // usually null
   }
@@ -513,8 +416,8 @@ class StoryState {
 
     dict["evalStack"] = Json.WriteListRuntimeObjs(evaluationStack);
 
-    if (!divertedPointer!.isNull) {
-      dict["currentDivertTarget"] = divertedPointer!.path!.componentsString;
+    if (!divertedPointer.isNull) {
+      dict["currentDivertTarget"] = divertedPointer.path!.componentsString;
     }
 
     dict["visitCounts"] = Json.WriteIntDictionary(_visitCounts);

@@ -1,3 +1,5 @@
+// reviewed
+
 import 'dart:convert';
 import 'dart:math';
 import 'addons/extra.dart';
@@ -638,37 +640,22 @@ class StoryState {
 
     bool includeInOutput = true;
 
-    // New glue, so chomp away any whitespace from the end of the stream
     if (glue != null) {
       TrimNewlinesFromOutputStream();
       includeInOutput = true;
-    }
-
-    // New text: do we really want to append it, if it's whitespace?
-    // Two different reasons for whitespace to be thrown away:
-    //   - Function start/end trimming
-    //   - User defined glue: <>
-    // We also need to know when to stop trimming, when there's non-whitespace.
-    else if (text != null) {
-      // Where does the current function call begin?
+    } else if (text != null) {
       var functionTrimIndex = -1;
       var currEl = callStack.currentElement;
       if (currEl.type == PushPopType.Function) {
         functionTrimIndex = currEl.functionStartInOuputStream;
       }
 
-      // Do 2 things:
-      //  - Find latest glue
-      //  - Check whether we're in the middle of String evaluation
-      // If we're in String eval within the current function, we
-      // don't want to trim back further than the length of the current String.
       int glueTrimIndex = -1;
       for (int i = outputStream.length - 1; i >= 0; i--) {
         var o = outputStream[i];
         var c = o.csAs<ControlCommand>();
         var g = o.csAs<Glue>();
 
-        // Find latest glue
         if (g != null) {
           glueTrimIndex = i;
           break;
@@ -683,7 +670,6 @@ class StoryState {
         }
       }
 
-      // Where is the most agressive (earliest) trim point?
       var trimIndex = -1;
       if (glueTrimIndex != -1 && functionTrimIndex != -1) {
         trimIndex = min(functionTrimIndex, glueTrimIndex);
@@ -693,22 +679,14 @@ class StoryState {
         trimIndex = functionTrimIndex;
       }
 
-      // So, are we trimming then?
       if (trimIndex != -1) {
-        // While trimming, we want to throw all newlines away,
-        // whether due to glue or the start of a function
         if (text.isNewline) {
           includeInOutput = false;
-        }
-
-        // Able to completely reset when normal text is pushed
-        else if (text.isNonWhitespace) {
+        } else if (text.isNonWhitespace) {
           if (glueTrimIndex > -1) {
             RemoveExistingGlue();
           }
 
-          // Tell all functions in callstack that we have seen proper text,
-          // so trimming whitespace at the start is done.
           if (functionTrimIndex > -1) {
             var callstackElements = callStack.elements;
             for (int i = callstackElements.length - 1; i >= 0; i--) {
@@ -739,13 +717,6 @@ class StoryState {
 
   void TrimNewlinesFromOutputStream() {
     int removeWhitespaceFrom = -1;
-
-    // Work back from the end, and try to find the point where
-    // we need to start removing content.
-    //  - Simply work backwards to find the first newline in a String of whitespace
-    // e.g. This is the content   \n   \n\n
-    //                            ^---------^ whitespace to remove
-    //                        ^--- first while loop stops here
     int i = outputStream.length - 1;
     while (i >= 0) {
       var obj = outputStream[i];
@@ -760,7 +731,6 @@ class StoryState {
       i--;
     }
 
-    // Remove the whitespace
     if (removeWhitespaceFrom >= 0) {
       i = removeWhitespaceFrom;
       while (i < outputStream.length) {
@@ -783,7 +753,6 @@ class StoryState {
       if (c is Glue) {
         outputStream.removeAt(i);
       } else if (c is ControlCommand) {
-        // e.g. BeginString
         break;
       }
     }
@@ -837,13 +806,11 @@ class StoryState {
   }
 
   RuntimeObject PopEvaluationStack() {
-    var obj = evaluationStack[evaluationStack.length - 1];
-    evaluationStack.removeAt(evaluationStack.length - 1);
-    return obj;
+    return evaluationStack.removeLast();
   }
 
   RuntimeObject PeekEvaluationStack() {
-    return evaluationStack[evaluationStack.length - 1];
+    return evaluationStack.last;
   }
 
   List<RuntimeObject> PopEvaluationStackMulti(int numberOfObjects) {
@@ -858,14 +825,6 @@ class StoryState {
     return popped;
   }
 
-  /// <summary>
-  /// Ends the current ink flow, unwrapping the callstack but without
-  /// affecting any variables. Useful if the ink is (say) in the middle
-  /// a nested tunnel, and you want it to reset so that you can divert
-  /// elsewhere using ChoosePathString(). Otherwise, after finishing
-  /// the content you diverted to, it would continue where it left off.
-  /// Calling this is equivalent to calling -> END in ink.
-  /// </summary>
   void ForceEnd() {
     callStack.Reset();
 
@@ -877,18 +836,12 @@ class StoryState {
     didSafeExit = true;
   }
 
-  // Add the end of a function call, trim any whitespace from the end.
-  // We always trim the start and end of the text that a function produces.
-  // The start whitespace is discard as it is generated, and the end
-  // whitespace is trimmed in one go here when we pop the function.
   void TrimWhitespaceFromFunctionEnd() {
     assert(callStack.currentElement.type == PushPopType.Function);
 
     var functionStartPoint =
         callStack.currentElement.functionStartInOuputStream;
 
-    // If the start point has become -1, it means that some non-whitespace
-    // text has been pushed, so it's safe to go as far back as we're able.
     if (functionStartPoint == -1) {
       functionStartPoint = 0;
     }
@@ -911,7 +864,6 @@ class StoryState {
   }
 
   void PopCallstack([PushPopType? popType]) {
-    // Add the end of a function call, trim any whitespace from the end.
     if (callStack.currentElement.type == PushPopType.Function) {
       TrimWhitespaceFromFunctionEnd();
     }
@@ -919,9 +871,7 @@ class StoryState {
     callStack.Pop(popType);
   }
 
-  // Don't make since the method need to be wrapped in Story for visit counting
   void SetChosenPath(Path path, bool incrementingTurnIndex) {
-    // Changing direction, assume we need to clear current set of choices
     _currentFlow.currentChoices.clear();
 
     var newPointer = story.PointerAtPath(path);
@@ -946,7 +896,6 @@ class StoryState {
   }
 
   void PassArgumentsToEvaluationStack(List? arguments) {
-    // Pass arguments onto the evaluation stack
     if (arguments != null) {
       for (int i = 0; i < arguments.length; i++) {
         if (!(arguments[i] is int ||
@@ -957,7 +906,7 @@ class StoryState {
               "ink arguments when calling EvaluateFunction / ChoosePathStringWithParameters must be int, float, String, bool or InkList. Argument was " +
                   (arguments[i] == null
                       ? "null"
-                      : arguments[i].GetType().Name));
+                      : arguments[i].runtimeType.toString()));
         }
 
         PushEvaluationStack(Value.Create(arguments[i]));
@@ -987,36 +936,24 @@ class StoryState {
     int originalEvaluationStackHeight =
         callStack.currentElement.evaluationStackHeightWhenPushed;
 
-    // Do we have a returned value?
-    // Potentially pop multiple values off the stack, in case we need
-    // to clean up after ourselves (e.g. caller of EvaluateFunction may
-    // have passed too many arguments, and we currently have no way to check for that)
     RuntimeObject? returnedObj;
     while (evaluationStack.length > originalEvaluationStackHeight) {
       var poppedObj = PopEvaluationStack();
       returnedObj ??= poppedObj;
     }
 
-    // Finally, pop the external function evaluation
     PopCallstack(PushPopType.FunctionEvaluationFromGame);
 
-    // What did we get back?
     if (returnedObj != null) {
       if (returnedObj is Void) {
         return null;
       }
 
-      // Some kind of value, if not void
       var returnVal = returnedObj as Value;
-
-      // DivertTargets get returned as the String of components
-      // (rather than a Path, which isn't public)
       if (returnVal.valueType == ValueType.DivertTarget) {
-        return returnVal.valueObject.ToString();
+        return returnVal.valueObject.toString();
       }
 
-      // Other types can just have their exact dynamic type:
-      // int, float, String. VariablePointers get returned as Strings.
       return returnVal.valueObject;
     }
 
@@ -1035,10 +972,6 @@ class StoryState {
     _outputStreamTextDirty = true;
     _outputStreamTagsDirty = true;
   }
-
-  // REMEMBER! REMEMBER! REMEMBER!
-  // When adding state, update the Copy method and serialisation
-  // REMEMBER! REMEMBER! REMEMBER!
 
   Map<String, int> _visitCounts = {};
   Map<String, int> _turnIndices = {};

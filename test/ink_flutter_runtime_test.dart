@@ -1,20 +1,20 @@
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:process_run/shell.dart';
 import 'package:ink_flutter_runtime/ink_flutter_runtime.dart';
 import 'package:ink_flutter_runtime/story.dart';
-import 'package:process_run/process_run.dart';
 import 'package:ink_flutter_runtime/error.dart';
+import 'package:http/http.dart' as http;
 
 enum TestMode { Normal, JsonRoundTrip }
 
 class Tests {
-  TestMode _mode;
+  final TestMode _mode;
   bool _testingErrors = false;
-  List _errorMessages = [];
-  List _warningMessages = [];
-  List _authorMessages = [];
+  final List _errorMessages = [];
+  final List _warningMessages = [];
+  final List _authorMessages = [];
 
   var shell = Shell();
 
@@ -24,37 +24,35 @@ class Tests {
     return File(file).readAsStringSync();
   }
 
-  Story CompileString(String str,
-      [bool countAllVisits = false, bool testingErrors = false]) {
+  Future<Story> CompileString(String str,
+      [bool countAllVisits = false, bool testingErrors = false]) async {
     _testingErrors = testingErrors;
     _errorMessages.clear();
     _warningMessages.clear();
     _authorMessages.clear();
 
-    File('/home/potuo/my/works/gugu/c-ink/ink_flutter_runtimeink/cache/xx.ink')
-        .writeAsStringSync(str);
+    var resp = await http.post(
+        Uri.parse("https://inkycloud.bluel.fun/ink/compile"),
+        body: jsonEncode({"main.ink": str}));
+    assert(resp.statusCode == 200);
 
-    shell.run(
-        r"echo $(mono /home/potuo/my/works/gugu/c-ink/ink_flutter_runtime/ink/inklecate -j /home/potuo/my/works/gugu/c-ink/ink_flutter_runtime/cache/xx.ink) > /home/potuo/my/works/gugu/c-ink/ink_flutter_runtime/cache/story.json");
+    var dict = jsonDecode(resp.body);
+    String? inkJson = dict['ink_json'];
+    dynamic result = dict['result'];
 
-    String storyjson = getFileData(
-            "/home/potuo/my/works/gugu/c-ink/ink_flutter_runtime/cache/story.json")
-        .toString();
-    print("xxx\n\n");
-    print(storyjson);
-    print("\n\nxxx");
-    Story story = Story(storyjson);
-
-    if (!testingErrors) {
-      assert(story != null);
+    if (result['compile-success'] != true) {
+      print(result['issues']);
+      throw Exception("编译失败");
     }
+
+    Story story = Story(inkJson!);
 
     story.onError.addListener(OnError);
 
     // Convert to json and back again
     if (_mode == TestMode.JsonRoundTrip) {
       var jsonStr = story.ToJson();
-      story = new Story(jsonStr);
+      story = Story(jsonStr);
       story.onError.addListener(OnError);
     }
 
@@ -75,34 +73,20 @@ class Tests {
 }
 
 void main() {
-  Tests tests = new Tests(TestMode.Normal);
-  test('adds one to input values', () {
-    var shell = Shell();
-    shell.run('''
-touch /home/potuo/test
-touch /home/potuo/test2
-''');
-    final calculator = Calculator();
-    expect(calculator.addOne(2), 3);
-    expect(calculator.addOne(-7), -6);
-    expect(calculator.addOne(0), 1);
-  });
-  test('=====TEST_001_END=====', () {
+  Tests tests = Tests(TestMode.Normal);
+  test('TestArithmetic', () async {
     var storyStr = r"""
--> once ->
--> once ->
-
-== once ==
-{<- content|}
-->->o
-
-== content ==
-Content
--> DONE
+{ 2 * 3 + 5 * 6 }
+{8 mod 3}
+{13 % 5}
+{ 7 / 3 }
+{ 7 / 3.0 }
+{ 10 - 2 }
+{ 2 * (5-1) }
 """;
 
-    Story story = tests.CompileString(storyStr);
-
-    expect("Content\n", story.Continue());
+    await tests.CompileString(storyStr).then((story) {
+      expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333333333335\n8\n8");
+    });
   });
 }

@@ -186,7 +186,7 @@ class NativeFunctionCall extends RuntimeObject {
       AddIntBinaryOp(Add, (x, y) => x + y);
       AddIntBinaryOp(Subtract, (x, y) => x - y);
       AddIntBinaryOp(Multiply, (x, y) => x * y);
-      AddIntBinaryOp(Divide, (x, y) => x / y);
+      AddIntBinaryOp(Divide, (x, y) => x ~/ y);
       AddIntBinaryOp(Mod, (x, y) => x % y);
       AddIntUnaryOp(Negate, (x) => -x);
 

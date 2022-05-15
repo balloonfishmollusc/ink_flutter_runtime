@@ -34,7 +34,7 @@ class Story extends RuntimeObject {
 
   List<Choice> get currentChoices {
     var choices = <Choice>[];
-    for (var c in _state!.currentChoices) {
+    for (var c in state.currentChoices) {
       if (!c.isInvisibleDefault) {
         c.index = choices.length;
         choices.add(c);
@@ -187,6 +187,7 @@ class Story extends RuntimeObject {
 
     bool outputStreamEndsInNewline = false;
     _sawLookaheadUnsafeFunctionAfterNewline = false;
+
     do {
       try {
         outputStreamEndsInNewline = ContinueSingleStep();
@@ -636,7 +637,7 @@ class Story extends RuntimeObject {
 
     choice.threadAtGeneration = state.callStack.ForkThread();
 
-    choice.text = (startText + choiceOnlyText).trim();
+    choice.text = (startText + choiceOnlyText).trimWhitespaces();
 
     return choice;
   }
@@ -743,7 +744,6 @@ class Story extends RuntimeObject {
           if (state.evaluationStack.isNotEmpty) {
             var output = state.PopEvaluationStack();
 
-            // Functions may evaluate to Void, in which case we skip output
             if (output is! Void) {
               var text = StringValue(output.toString());
 
@@ -1497,7 +1497,6 @@ class ExternalFunctionDef extends Struct {
 
   ExternalFunctionDef({required this.function, this.lookaheadSafe = false});
 }
-
 
 typedef ExternalFunction = dynamic Function(List args);
 //typedef VariableObserver = void Function(String variableName, dynamic newValue);

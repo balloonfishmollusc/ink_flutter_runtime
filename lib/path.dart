@@ -1,5 +1,7 @@
 // reviewed
 
+import 'addons/extra.dart';
+
 class PathComponent {
   final int index;
   final String? name;
@@ -124,7 +126,7 @@ class Path {
 
   String get componentsString {
     if (_componentsString == null) {
-      _componentsString = _components.join(".");
+      _componentsString = stringExtJoin(".", _components);
       if (isRelative) _componentsString = "." + _componentsString!;
     }
     return _componentsString!;

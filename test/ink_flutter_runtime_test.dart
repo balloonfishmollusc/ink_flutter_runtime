@@ -31,11 +31,11 @@ class Tests {
     _warningMessages.clear();
     _authorMessages.clear();
 
-    var resp = await http.post(
-        Uri.parse("https://inkycloud.bluel.fun/ink/compile"),
-        body: jsonEncode({"main.ink": str}));
+    var resp = await http
+        .post(Uri.parse("https://inkycloud.bluel.fun/ink/compile"),
+            body: jsonEncode({"main.ink": str}))
+        .timeout(const Duration(seconds: 3));
     assert(resp.statusCode == 200);
-
     var dict = jsonDecode(resp.body);
     String? inkJson = dict['ink_json'];
     dynamic result = dict['result'];
@@ -61,19 +61,28 @@ class Tests {
 
   void OnError(String message, ErrorType errorType) {
     if (_testingErrors) {
-      if (errorType == ErrorType.Error)
+      if (errorType == ErrorType.Error) {
         _errorMessages.add(message);
-      else if (errorType == ErrorType.Warning)
+      } else if (errorType == ErrorType.Warning) {
         _warningMessages.add(message);
-      else
+      } else {
         _authorMessages.add(message);
-    } else
+      }
+    } else {
       throw Exception(message);
+    }
   }
 }
 
 void main() {
-  Tests tests = Tests(TestMode.Normal);
+  test("Story Load", () {
+    String json =
+        r'''{"inkVersion":20,"root":[["ev",2,3,"*",5,6,"*","+","out","/ev","\n","ev",8,3,"%","out","/ev","\n","ev",13,5,"%","out","/ev","\n","ev",7,3,"/","out","/ev","\n","ev",7,3.0,"/","out","/ev","\n","ev",10,2,"-","out","/ev","\n","ev",2,5,1,"-","*","out","/ev","\n",["done",{"#n":"g-0"}],null],"done",null],"listDefs":{}}''';
+    var story = Story(json);
+    expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333\n8\n8\n");
+  });
+
+  Tests tests = Tests(TestMode.JsonRoundTrip);
   test('TestArithmetic', () async {
     var storyStr = r"""
 { 2 * 3 + 5 * 6 }
@@ -86,7 +95,24 @@ void main() {
 """;
 
     await tests.CompileString(storyStr).then((story) {
-      expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333333333335\n8\n8");
+      print("Story loaded!");
+      expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333\n8\n8\n");
+    });
+  });
+
+  test("TestMemoryLeak", () async {
+    var storyStr = r'''
+Once upon a time...
+
+ * There were two choices.
+ * There were four lines of content.
+
+- They lived happily ever after.
+    -> END
+''';
+
+    await tests.CompileString(storyStr).then((story) {
+      expect(story.Continue(), "Once upon a time...");
     });
   });
 }

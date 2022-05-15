@@ -6,6 +6,57 @@ abstract class Struct {
   Struct clone();
 }
 
+String stringExtJoin(String separator, List objects) {
+  var sb = StringBuilder();
+
+  var isFirst = true;
+  for (var o in objects) {
+    if (!isFirst) sb.add(separator);
+
+    sb.add(o.toString());
+
+    isFirst = false;
+  }
+
+  return sb.toString();
+}
+
+extension StringEx on String {
+  String trimWhitespaces() {
+    return trimEx({" ", "\t"});
+  }
+
+  String trimRightEx(Set<String> charSet) {
+    if (length == 0) return "";
+
+    const int startPos = 0;
+    int endPos = length - 1;
+
+    while (startPos <= endPos) {
+      if (charSet.contains(this[endPos])) {
+        endPos--;
+      }
+    }
+    return substring(startPos, endPos - startPos + 1);
+  }
+
+  String trimEx(Set<String> charSet) {
+    if (length == 0) return "";
+
+    int startPos = 0;
+    int endPos = length - 1;
+
+    while (startPos <= endPos) {
+      if (charSet.contains(this[startPos])) {
+        startPos++;
+      } else if (charSet.contains(this[endPos])) {
+        endPos--;
+      }
+    }
+    return substring(startPos, endPos - startPos + 1);
+  }
+}
+
 class StringBuilder extends ListMixin<String> {
   final List<String> lst = <String>[];
 

@@ -3,6 +3,7 @@
 import 'runtime_object.dart';
 import 'path.dart';
 import 'story_exception.dart';
+import 'addons/extra.dart';
 
 enum ValueType {
   // Bool is new addition, keep enum values the same, with Int==0, Float==1 etc,
@@ -134,11 +135,14 @@ class FloatValue extends Value<double> {
     }
 
     if (newType == ValueType.String) {
-      return StringValue(value.toString());
+      return StringValue(value.toStringAsFixed(7).trimRightEx({"0"}));
     }
 
     throw badCastException(newType);
   }
+
+  @override
+  String toString() => value.toStringAsFixed(7).trimRightEx({"0"});
 
   @override
   bool get isTruthy => value != 0.0;
@@ -153,7 +157,7 @@ class StringValue extends Value<String> {
 
   StringValue([String value = ""]) : super(value) {
     isNewline = value == "\n";
-    isInlineWhitespace = value.trim().isEmpty;
+    isInlineWhitespace = value.codeUnits.every((e) => e == 32 || e == 9);
   }
 
   bool get isNonWhitespace => !isNewline && !isInlineWhitespace;

@@ -8,7 +8,7 @@ import 'story.dart';
 
 class Flow {
   String name;
-  late final CallStack callStack;
+  late CallStack callStack;
   List<RuntimeObject> outputStream = [];
   List<Choice> currentChoices = [];
 

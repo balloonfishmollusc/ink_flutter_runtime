@@ -163,7 +163,7 @@ class CallStack {
   bool get canPop => callStack.length > 1;
 
   CallStack.new1(Story storyContext) {
-    _startOfRoot = Pointer.StartOf(storyContext.rootContentContainer!);
+    _startOfRoot = Pointer.StartOf(storyContext.rootContentContainer);
     Reset();
   }
 

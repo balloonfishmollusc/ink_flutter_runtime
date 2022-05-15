@@ -514,8 +514,8 @@ class Json {
     var container = Container();
     container.content = JArrayToRuntimeObjList<RuntimeObject>(jArray, true);
 
-    var terminatingObj = jArray.last.tryCast<Map<String, dynamic>>();
-    if (terminatingObj != null) {
+    var terminatingObj = jArray.last;
+    if (terminatingObj != null && terminatingObj is Map<String, dynamic>) {
       var namedOnlyContent = <String, RuntimeObject?>{};
 
       for (var keyVal in terminatingObj.entries) {

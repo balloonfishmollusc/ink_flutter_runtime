@@ -18,7 +18,7 @@ class Container extends RuntimeObject implements INamedContent {
 
   final List<RuntimeObject> _content = [];
   List<RuntimeObject> get content => _content;
-  set content(value) => AddContent(value);
+  set content(value) => AddContents(value);
 
   final Map<String, INamedContent> namedContent = {};
 

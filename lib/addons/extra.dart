@@ -6,14 +6,19 @@ abstract class Struct {
   Struct clone();
 }
 
-class StringBuilder extends ListBase<String> {
+class StringBuilder extends ListMixin<String> {
   final List<String> lst = <String>[];
+
+  @override
+  String toString() => lst.join();
 
   @override
   int get length => lst.length;
 
   @override
-  String operator [](int index) => lst[index];
+  String operator [](int index) {
+    return lst[index];
+  }
 
   @override
   void operator []=(int index, String value) {
@@ -26,7 +31,10 @@ class StringBuilder extends ListBase<String> {
   }
 
   @override
-  String toString() => lst.join();
+  void add(String element) => lst.add(element);
+
+  @override
+  void addAll(Iterable<String> iterable) => lst.addAll(iterable);
 }
 
 extension CsObject on Object {

@@ -77,12 +77,13 @@ class Tests {
 void main() {
   test("Story Load", () {
     String json =
-        r'''{"inkVersion":20,"root":[["ev",2,3,"*",5,6,"*","+","out","/ev","\n","ev",8,3,"%","out","/ev","\n","ev",13,5,"%","out","/ev","\n","ev",7,3,"/","out","/ev","\n","ev",7,3.0,"/","out","/ev","\n","ev",10,2,"-","out","/ev","\n","ev",2,5,1,"-","*","out","/ev","\n",["done",{"#n":"g-0"}],null],"done",null],"listDefs":{}}''';
+        r'''{"cInkVersion":"1.0.0","inkVersion":20,"root":[["ev",2,3,"*",5,6,"*","+","out","/ev","\n","ev",8,3,"%","out","/ev","\n","ev",13,5,"%","out","/ev","\n","ev",7,3,"/","out","/ev","\n","ev",7,3.0,"/","out","/ev","\n","ev",10,2,"-","out","/ev","\n","ev",2,5,1,"-","*","out","/ev","\n",["done",{"#n":"g-0"}],null],"done",null],"listDefs":{}}''';
+    //r'''{"inkVersion":20,"root":[["ev",2,3,"*",5,6,"*","+","out","/ev","\n","ev",8,3,"%","out","/ev","\n","ev",13,5,"%","out","/ev","\n","ev",7,3,"/","out","/ev","\n","ev",7,3.0,"/","out","/ev","\n","ev",10,2,"-","out","/ev","\n","ev",2,5,1,"-","*","out","/ev","\n",["done",{"#n":"g-0"}],null],"done",null],"listDefs":{}}''';
     var story = Story(json);
     expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333\n8\n8\n");
   });
 
-  Tests tests = Tests(TestMode.JsonRoundTrip);
+  Tests tests = Tests(TestMode.Normal);
   test('TestArithmetic', () async {
     var storyStr = r"""
 { 2 * 3 + 5 * 6 }
@@ -103,16 +104,17 @@ void main() {
   test("TestMemoryLeak", () async {
     var storyStr = r'''
 Once upon a time...
+45
+12
+ //* There were two choices.
+ //* There were four lines of content.
 
- * There were two choices.
- * There were four lines of content.
-
-- They lived happily ever after.
+//- They lived happily ever after.
     -> END
 ''';
 
     await tests.CompileString(storyStr).then((story) {
-      expect(story.Continue(), "Once upon a time...");
+      expect(story.ContinueMaximally(), "Once upon a time...\n45\n12\n");
     });
   });
 }

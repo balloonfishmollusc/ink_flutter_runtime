@@ -182,7 +182,7 @@ class Story extends RuntimeObject {
     state.ResetOutput();
 
     if (_recursiveContinueCount == 1) {
-      _state!.variablesState!.batchObservingVariableChanges = true;
+      state.variablesState!.batchObservingVariableChanges = true;
     }
 
     bool outputStreamEndsInNewline = false;
@@ -303,8 +303,6 @@ class Story extends RuntimeObject {
 
     if (!state.inStringEvaluation) {
       if (_stateSnapshotAtLastNewline != null) {
-        // Has proper text or a tag been added? Then we know that the newline
-        // that was previously added is definitely the end of the line.
         var change = CalculateNewlineOutputStateChange(
             _stateSnapshotAtLastNewline!.currentText!,
             state.currentText!,
@@ -314,7 +312,6 @@ class Story extends RuntimeObject {
         if (change == OutputStateChange.ExtendedBeyondNewline ||
             _sawLookaheadUnsafeFunctionAfterNewline) {
           RestoreStateSnapshot();
-
           return true;
         } else if (change == OutputStateChange.NewlineRemoved) {
           DiscardSnapshot();
@@ -343,9 +340,7 @@ class Story extends RuntimeObject {
         currText[prevText.length - 1] == '\n';
     if (prevTagCount == currTagCount &&
         prevText.length == currText.length &&
-        newlineStillExists) {
-      return OutputStateChange.NoChange;
-    }
+        newlineStillExists) return OutputStateChange.NoChange;
 
     if (!newlineStillExists) {
       return OutputStateChange.NewlineRemoved;
@@ -468,9 +463,7 @@ class Story extends RuntimeObject {
     bool shouldAddToStream = true;
 
     var pointer = state.currentPointer;
-    if (pointer.isNull) {
-      return;
-    }
+    if (pointer.isNull) return;
 
     Container? containerToEnter = pointer.Resolve()?.csAs<Container>();
     while (containerToEnter != null) {
@@ -490,13 +483,9 @@ class Story extends RuntimeObject {
     var currentContentObj = pointer.Resolve();
     bool isLogicOrFlowControl = PerformLogicAndFlowControl(currentContentObj);
 
-    if (state.currentPointer.isNull) {
-      return;
-    }
+    if (state.currentPointer.isNull) return;
 
-    if (isLogicOrFlowControl) {
-      shouldAddToStream = false;
-    }
+    if (isLogicOrFlowControl) shouldAddToStream = false;
 
     var choicePoint = currentContentObj?.csAs<ChoicePoint>();
     if (choicePoint != null) {

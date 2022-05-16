@@ -81,9 +81,7 @@ void main() {
 { 10 - 2 }
 { 2 * (5-1) }
 """;
-
-    await tests.CompileString(storyStr).then((story) {
-      expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333\n8\n8\n");
-    });
+    var story = await tests.CompileString(storyStr);
+    expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333\n8\n8\n");
   });
 }

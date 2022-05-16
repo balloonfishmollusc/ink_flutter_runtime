@@ -84,4 +84,26 @@ void main() {
     var story = await tests.CompileString(storyStr);
     expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333\n8\n8\n");
   });
+
+  test("TestBasicStringLiterals", () async {
+    var story = await tests.CompileString(r'''
+VAR x = "Hello world 1"
+{x}
+Hello {"world"} 2.
+''');
+    expect(story.ContinueMaximally(), "Hello world 1\nHello world 2.\n");
+  });
+
+  test("TestBasicTunnel", () async {
+    Story story = await tests.CompileString(r'''
+-> f ->
+<> world
+
+== f ==
+Hello
+->->
+''');
+
+    expect(story.Continue(), "Hello world\n");
+  });
 }

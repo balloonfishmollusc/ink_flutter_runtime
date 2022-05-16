@@ -9,6 +9,8 @@
 .history
 .svn/
 
+test/cache
+
 # IntelliJ related
 *.iml
 *.ipr

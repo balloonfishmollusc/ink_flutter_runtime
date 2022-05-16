@@ -343,8 +343,8 @@ class Json {
 
       bool _skip = false;
 
-      propValue = obj["->"];
       if (!_skip) {
+        propValue = obj["->"];
         if (propValue != null) {
           isDivert = true;
           _skip = true;

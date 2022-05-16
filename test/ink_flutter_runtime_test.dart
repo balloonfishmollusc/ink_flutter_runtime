@@ -15,8 +15,7 @@ class Tests {
 
   Tests(this._mode);
 
-  Future<Story> CompileString(String str,
-      [bool countAllVisits = false, bool testingErrors = false]) async {
+  Future<Story> CompileString(String str, {bool testingErrors = false}) async {
     _testingErrors = testingErrors;
     _errorMessages.clear();
     _warningMessages.clear();
@@ -39,8 +38,6 @@ class Tests {
 
     String inkJson = File("${cacheDir.path}/main.ink.json").readAsStringSync();
     Story story = Story(inkJson);
-
-    expect(inkJson, story.ToJson());
 
     story.onError.addListener(OnError);
 
@@ -106,5 +103,125 @@ Hello
 ''');
 
     expect(story.Continue(), "Hello world\n");
+  });
+
+  test("TestBlanksInInlineSequences", () async {
+    var story = await tests.CompileString(r'''
+1. -> seq1 ->
+2. -> seq1 ->
+3. -> seq1 ->
+4. -> seq1 ->
+\---
+1. -> seq2 ->
+2. -> seq2 ->
+3. -> seq2 ->
+\---
+1. -> seq3 ->
+2. -> seq3 ->
+3. -> seq3 ->
+\---
+1. -> seq4 ->
+2. -> seq4 ->
+3. -> seq4 ->
+
+== seq1 ==
+{a||b}
+->->
+
+== seq2 ==
+{|a}
+->->
+
+== seq3 ==
+{a|}
+->->
+
+== seq4 ==
+{|}
+->->''');
+
+    expect(story.ContinueMaximally(), r'''
+1. a
+2.
+3. b
+4. b
+---
+1.
+2. a
+3. a
+---
+1. a
+2.
+3.
+---
+1.
+2.
+3.
+''');
+  });
+
+  test("TestAllSequenceTypes", () async {
+    var storyStr = r'''
+~ SEED_RANDOM(1)
+
+Once: {f_once()} {f_once()} {f_once()} {f_once()}
+Stopping: {f_stopping()} {f_stopping()} {f_stopping()} {f_stopping()}
+Default: {f_default()} {f_default()} {f_default()} {f_default()}
+Cycle: {f_cycle()} {f_cycle()} {f_cycle()} {f_cycle()}
+Shuffle: {f_shuffle()} {f_shuffle()} {f_shuffle()} {f_shuffle()}
+Shuffle stopping: {f_shuffle_stopping()} {f_shuffle_stopping()} {f_shuffle_stopping()} {f_shuffle_stopping()}
+Shuffle once: {f_shuffle_once()} {f_shuffle_once()} {f_shuffle_once()} {f_shuffle_once()}
+
+== function f_once ==
+{once:
+    - one
+    - two
+}
+
+== function f_stopping ==
+{stopping:
+    - one
+    - two
+}
+
+== function f_default ==
+{one|two}
+
+== function f_cycle ==
+{cycle:
+    - one
+    - two
+}
+
+== function f_shuffle ==
+{shuffle:
+    - one
+    - two
+}
+
+== function f_shuffle_stopping ==
+{stopping shuffle:
+    - one
+    - two
+    - final
+}
+
+== function f_shuffle_once ==
+{shuffle once:
+    - one
+    - two
+}
+                ''';
+
+    Story story = await tests.CompileString(storyStr);
+    expect(story.ContinueMaximally(),
+        r'''Once: one two
+Stopping: one two two two
+Default: one two two two
+Cycle: one two one two
+Shuffle: two one one two
+Shuffle stopping: two one final final
+Shuffle once: one two
+''');
   });
 }

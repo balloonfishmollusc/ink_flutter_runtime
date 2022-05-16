@@ -1,11 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:process_run/shell.dart';
-import 'package:ink_flutter_runtime/ink_flutter_runtime.dart';
 import 'package:ink_flutter_runtime/story.dart';
 import 'package:ink_flutter_runtime/error.dart';
-import 'package:http/http.dart' as http;
 
 enum TestMode { Normal, JsonRoundTrip }
 
@@ -16,13 +13,7 @@ class Tests {
   final List _warningMessages = [];
   final List _authorMessages = [];
 
-  var shell = Shell();
-
   Tests(this._mode);
-
-  getFileData(String file) {
-    return File(file).readAsStringSync();
-  }
 
   Future<Story> CompileString(String str,
       [bool countAllVisits = false, bool testingErrors = false]) async {
@@ -31,21 +22,24 @@ class Tests {
     _warningMessages.clear();
     _authorMessages.clear();
 
-    var resp = await http
-        .post(Uri.parse("https://inkycloud.bluel.fun/ink/compile"),
-            body: jsonEncode({"main.ink": str}))
-        .timeout(const Duration(seconds: 3));
-    assert(resp.statusCode == 200);
-    var dict = jsonDecode(resp.body);
-    String? inkJson = dict['ink_json'];
-    dynamic result = dict['result'];
+    var cacheDir = Directory("test/cache");
+    if (cacheDir.existsSync()) cacheDir.deleteSync(recursive: true);
+    cacheDir.createSync();
 
-    if (result['compile-success'] != true) {
-      print(result['issues']);
+    File("${cacheDir.path}/main.ink").writeAsStringSync(str);
+
+    var shell = Shell(workingDirectory: "test");
+    var processResults = await shell.run(
+        "${Platform.isWindows ? 'dotnet' : 'mono'} ./inklecate.dll -j cache/main.ink");
+
+    String shellOutput = processResults.first.outText;
+    if (!shellOutput.contains('{"compile-success": true}')) {
+      print(shellOutput);
       throw Exception("编译失败");
     }
 
-    Story story = Story(inkJson!);
+    String inkJson = File("${cacheDir.path}/main.ink.json").readAsStringSync();
+    Story story = Story(inkJson);
 
     story.onError.addListener(OnError);
 
@@ -75,14 +69,8 @@ class Tests {
 }
 
 void main() {
-  test("Story Load", () {
-    String json =
-        r'''{"cInkVersion":"1.0.0","inkVersion":20,"root":[["^Once upon a time...","\n","^45","\n","^12","\n","^89","\n","end",["done",{"#n":"g-0"}],null],"done",null],"listDefs":{}}''';
-    var story = Story(json);
-    expect(story.ContinueMaximally(), "Once upon a time...\n45\n12\n89\n");
-  });
-
   Tests tests = Tests(TestMode.Normal);
+
   test('TestArithmetic', () async {
     var storyStr = r"""
 { 2 * 3 + 5 * 6 }

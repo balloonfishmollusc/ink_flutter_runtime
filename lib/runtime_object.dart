@@ -68,7 +68,7 @@ class RuntimeObject {
           }
 
           child = container;
-          container = container.parent!.csAs<Container>();
+          container = container.parent?.csAs<Container>();
         }
 
         _path = Path.new2(comps);

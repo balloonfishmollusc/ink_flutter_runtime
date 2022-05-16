@@ -77,10 +77,9 @@ class Tests {
 void main() {
   test("Story Load", () {
     String json =
-        r'''{"cInkVersion":"1.0.0","inkVersion":20,"root":[["ev",2,3,"*",5,6,"*","+","out","/ev","\n","ev",8,3,"%","out","/ev","\n","ev",13,5,"%","out","/ev","\n","ev",7,3,"/","out","/ev","\n","ev",7,3.0,"/","out","/ev","\n","ev",10,2,"-","out","/ev","\n","ev",2,5,1,"-","*","out","/ev","\n",["done",{"#n":"g-0"}],null],"done",null],"listDefs":{}}''';
-    //r'''{"inkVersion":20,"root":[["ev",2,3,"*",5,6,"*","+","out","/ev","\n","ev",8,3,"%","out","/ev","\n","ev",13,5,"%","out","/ev","\n","ev",7,3,"/","out","/ev","\n","ev",7,3.0,"/","out","/ev","\n","ev",10,2,"-","out","/ev","\n","ev",2,5,1,"-","*","out","/ev","\n",["done",{"#n":"g-0"}],null],"done",null],"listDefs":{}}''';
+        r'''{"cInkVersion":"1.0.0","inkVersion":20,"root":[["^Once upon a time...","\n","^45","\n","^12","\n","^89","\n","end",["done",{"#n":"g-0"}],null],"done",null],"listDefs":{}}''';
     var story = Story(json);
-    expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333\n8\n8\n");
+    expect(story.ContinueMaximally(), "Once upon a time...\n45\n12\n89\n");
   });
 
   Tests tests = Tests(TestMode.Normal);
@@ -96,25 +95,7 @@ void main() {
 """;
 
     await tests.CompileString(storyStr).then((story) {
-      print("Story loaded!");
       expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333\n8\n8\n");
-    });
-  });
-
-  test("TestMemoryLeak", () async {
-    var storyStr = r'''
-Once upon a time...
-45
-12
- //* There were two choices.
- //* There were four lines of content.
-
-//- They lived happily ever after.
-    -> END
-''';
-
-    await tests.CompileString(storyStr).then((story) {
-      expect(story.ContinueMaximally(), "Once upon a time...\n45\n12\n");
     });
   });
 }

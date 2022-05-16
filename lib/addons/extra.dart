@@ -35,6 +35,8 @@ extension StringEx on String {
     while (startPos <= endPos) {
       if (charSet.contains(this[endPos])) {
         endPos--;
+      } else {
+        break;
       }
     }
     return substring(startPos, endPos - startPos + 1);
@@ -49,9 +51,15 @@ extension StringEx on String {
     while (startPos <= endPos) {
       if (charSet.contains(this[startPos])) {
         startPos++;
-      } else if (charSet.contains(this[endPos])) {
-        endPos--;
+        continue;
       }
+
+      if (charSet.contains(this[endPos])) {
+        endPos--;
+        continue;
+      }
+
+      break;
     }
     return substring(startPos, endPos - startPos + 1);
   }

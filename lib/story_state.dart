@@ -162,13 +162,13 @@ class StoryState {
     }
   }
 
-  Pointer get currentPointer => callStack.currentElement.currentPointer;
+  Pointer get currentPointer => callStack.currentElement.currentPointer.clone() as Pointer;
 
   set currentPointer(Pointer value) {
     callStack.currentElement.currentPointer = value;
   }
 
-  Pointer get previousPointer => callStack.currentThread.previousPointer;
+  Pointer get previousPointer => callStack.currentThread.previousPointer.clone() as Pointer;
 
   set previousPointer(Pointer value) {
     callStack.currentThread.previousPointer = value;

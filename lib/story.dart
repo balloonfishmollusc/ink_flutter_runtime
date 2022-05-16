@@ -309,6 +309,8 @@ class Story extends RuntimeObject {
             _stateSnapshotAtLastNewline!.currentTags.length,
             state.currentTags.length);
 
+        //print("change: $change");
+
         if (change == OutputStateChange.ExtendedBeyondNewline ||
             _sawLookaheadUnsafeFunctionAfterNewline) {
           RestoreStateSnapshot();
@@ -336,6 +338,10 @@ class Story extends RuntimeObject {
 
   OutputStateChange CalculateNewlineOutputStateChange(
       String prevText, String currText, int prevTagCount, int currTagCount) {
+    //print("prev: $prevText");
+   // print("curr: $currText");
+    //print("=========");
+
     var newlineStillExists = currText.length >= prevText.length &&
         currText[prevText.length - 1] == '\n';
     if (prevTagCount == currTagCount &&
@@ -413,7 +419,7 @@ class Story extends RuntimeObject {
           "Failed to find content at path '$path', so it was approximated to: '${result.obj!.path}'.");
     }
 
-    return p;
+    return p.clone() as Pointer;
   }
 
   void StateSnapshot() {
@@ -460,6 +466,8 @@ class Story extends RuntimeObject {
   }
 
   void Step() {
+    //print(state.currentPointer.path.toString());
+
     bool shouldAddToStream = true;
 
     var pointer = state.currentPointer;

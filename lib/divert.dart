@@ -26,20 +26,20 @@ class Divert extends RuntimeObject {
   }
 
   Pointer get targetPointer {
-    if (_targetPointer!.isNull) {
+    if (_targetPointer.isNull) {
       var targetObj = ResolvePath(_targetPath!).obj!;
 
       if (_targetPath!.lastComponent!.isIndex) {
-        _targetPointer!.container = targetObj.parent?.csAs<Container>();
-        _targetPointer!.index = _targetPath!.lastComponent!.index;
+        _targetPointer.container = targetObj.parent?.csAs<Container>();
+        _targetPointer.index = _targetPath!.lastComponent!.index;
       } else {
         _targetPointer = Pointer.StartOf(targetObj.csAs<Container>());
       }
     }
-    return _targetPointer!.clone() as Pointer;
+    return _targetPointer.clone() as Pointer;
   }
 
-  Pointer? _targetPointer;
+  Pointer _targetPointer = Pointer.Null;
 
   String? get targetPathString {
     if (targetPath == null) return null;

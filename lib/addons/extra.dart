@@ -2,10 +2,6 @@
 
 import 'dart:collection';
 
-abstract class Struct {
-  Struct clone();
-}
-
 String stringExtJoin(String separator, List objects) {
   var sb = StringBuilder();
 

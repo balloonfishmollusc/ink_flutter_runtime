@@ -169,8 +169,7 @@ class Container extends RuntimeObject implements INamedContent {
       {int partialPathStart = 0, int partialPathLength = -1}) {
     if (partialPathLength == -1) partialPathLength = path.length;
 
-    var result = SearchResult();
-    result.approximate = false;
+    var result = SearchResult(approximate: false);
 
     Container? currentContainer = this;
     RuntimeObject currentObj = this;
@@ -180,7 +179,7 @@ class Container extends RuntimeObject implements INamedContent {
 
       // Path component was wrong type
       if (currentContainer == null) {
-        result.approximate = true;
+        result = result.withApprox(true);
         break;
       }
 
@@ -188,7 +187,7 @@ class Container extends RuntimeObject implements INamedContent {
 
       // Couldn't resolve entire path?
       if (foundObj == null) {
-        result.approximate = true;
+        result = result.withApprox(true);
         break;
       }
 
@@ -196,7 +195,7 @@ class Container extends RuntimeObject implements INamedContent {
       currentContainer = foundObj.csAs<Container>();
     }
 
-    result.obj = currentObj;
+    result = result.withObj(currentObj);
 
     return result;
   }

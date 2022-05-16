@@ -3,11 +3,10 @@
 import 'container.dart';
 import 'runtime_object.dart';
 import 'path.dart';
-import 'addons/extra.dart';
 
-class Pointer extends Struct {
-  Container? container;
-  int index;
+class Pointer{
+  final Container? container;
+  final int index;
 
   Pointer({required this.container, required this.index});
 
@@ -44,8 +43,8 @@ class Pointer extends Struct {
 
   static Pointer get Null => Pointer(container: null, index: -1);
 
-  @override
-  Struct clone() {
-    return Pointer(container: container, index: index);
-  }
+  Pointer withContainer(Container? container) =>
+      Pointer(container: container, index: index);
+
+  Pointer withIndex(int index) => Pointer(container: container, index: index);
 }

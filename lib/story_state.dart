@@ -162,13 +162,13 @@ class StoryState {
     }
   }
 
-  Pointer get currentPointer => callStack.currentElement.currentPointer.clone() as Pointer;
+  Pointer get currentPointer => callStack.currentElement.currentPointer;
 
   set currentPointer(Pointer value) {
     callStack.currentElement.currentPointer = value;
   }
 
-  Pointer get previousPointer => callStack.currentThread.previousPointer.clone() as Pointer;
+  Pointer get previousPointer => callStack.currentThread.previousPointer;
 
   set previousPointer(Pointer value) {
     callStack.currentThread.previousPointer = value;
@@ -908,7 +908,7 @@ class StoryState {
 
     var newPointer = story.PointerAtPath(path);
     if (!newPointer.isNull && newPointer.index == -1) {
-      newPointer.index = 0;
+      newPointer = newPointer.withIndex(0);
     }
 
     currentPointer = newPointer;

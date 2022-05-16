@@ -56,8 +56,8 @@ class CallStackThread {
 
         var threadPointerResult =
             storyContext.ContentAtPath(Path.new3(currentContainerPathStr));
-        pointer.container = threadPointerResult.container;
-        pointer.index = jElementObj["idx"] as int;
+        pointer = pointer.withContainer(threadPointerResult.container);
+        pointer = pointer.withIndex(jElementObj["idx"] as int);
 
         if (threadPointerResult.obj == null) {
           throw Exception(
@@ -294,8 +294,7 @@ class CallStack {
   int ContextForVariableNamed(String name) {
     if (currentElement.temporaryVariables.containsKey(name)) {
       return currentElementIndex + 1;
-    }
-    else {
+    } else {
       return 0;
     }
   }

@@ -339,7 +339,7 @@ class Story extends RuntimeObject {
   OutputStateChange CalculateNewlineOutputStateChange(
       String prevText, String currText, int prevTagCount, int currTagCount) {
     //print("prev: $prevText");
-   // print("curr: $currText");
+    // print("curr: $currText");
     //print("=========");
 
     var newlineStillExists = currText.length >= prevText.length &&
@@ -419,7 +419,7 @@ class Story extends RuntimeObject {
           "Failed to find content at path '$path', so it was approximated to: '${result.obj!.path}'.");
     }
 
-    return p.clone() as Pointer;
+    return p;
   }
 
   void StateSnapshot() {
@@ -466,7 +466,7 @@ class Story extends RuntimeObject {
   }
 
   void Step() {
-    //print(state.currentPointer.path.toString());
+    //print(state.currentPointer.toString());
 
     bool shouldAddToStream = true;
 
@@ -1279,7 +1279,7 @@ class Story extends RuntimeObject {
     bool successfulIncrement = true;
 
     var pointer = state.callStack.currentElement.currentPointer;
-    pointer.index++;
+    pointer = pointer.withIndex(pointer.index + 1);
 
     while (pointer.index >= pointer.container!.content.length) {
       successfulIncrement = false;
@@ -1294,10 +1294,7 @@ class Story extends RuntimeObject {
         break;
       }
 
-      pointer = Pointer(container: nextAncestor, index: indexInAncestor);
-
-      pointer.index++;
-
+      pointer = Pointer(container: nextAncestor, index: indexInAncestor + 1);
       successfulIncrement = true;
     }
 
@@ -1482,16 +1479,9 @@ class Story extends RuntimeObject {
 
 enum OutputStateChange { NoChange, ExtendedBeyondNewline, NewlineRemoved }
 
-class ExternalFunctionDef extends Struct {
-  ExternalFunction function;
-  bool lookaheadSafe;
-
-  @override
-  Struct clone() {
-    return ExternalFunctionDef(
-        function: function, lookaheadSafe: lookaheadSafe);
-  }
-
+class ExternalFunctionDef {
+  final ExternalFunction function;
+  final bool lookaheadSafe;
   ExternalFunctionDef({required this.function, this.lookaheadSafe = false});
 }
 

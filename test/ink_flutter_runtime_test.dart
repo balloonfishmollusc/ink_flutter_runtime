@@ -34,12 +34,13 @@ class Tests {
 
     String shellOutput = processResults.first.outText;
     if (!shellOutput.contains('{"compile-success": true}')) {
-      print(shellOutput);
       throw Exception("编译失败");
     }
 
     String inkJson = File("${cacheDir.path}/main.ink.json").readAsStringSync();
     Story story = Story(inkJson);
+
+    expect(inkJson, story.ToJson());
 
     story.onError.addListener(OnError);
 

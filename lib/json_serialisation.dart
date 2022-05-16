@@ -344,34 +344,42 @@ class Json {
       bool _skip = false;
 
       propValue = obj["->"];
-      if (!_skip && propValue != null) {
-        isDivert = true;
-        _skip = true;
+      if (!_skip) {
+        if (propValue != null) {
+          isDivert = true;
+          _skip = true;
+        }
       }
 
-      propValue = obj["f()"];
-      if (!_skip && propValue != null) {
-        isDivert = true;
-        pushesToStack = true;
-        divPushType = PushPopType.Function;
-        _skip = true;
+      if (!_skip) {
+        propValue = obj["f()"];
+        if (propValue != null) {
+          isDivert = true;
+          pushesToStack = true;
+          divPushType = PushPopType.Function;
+          _skip = true;
+        }
       }
 
-      propValue = obj["->t->"];
-      if (!_skip && propValue != null) {
-        isDivert = true;
-        pushesToStack = true;
-        divPushType = PushPopType.Tunnel;
-        _skip = true;
+      if (!_skip) {
+        propValue = obj["->t->"];
+        if (propValue != null) {
+          isDivert = true;
+          pushesToStack = true;
+          divPushType = PushPopType.Tunnel;
+          _skip = true;
+        }
       }
 
-      propValue = obj["x()"];
-      if (!_skip && propValue != null) {
-        isDivert = true;
-        external = true;
-        pushesToStack = false;
-        divPushType = PushPopType.Function;
-        _skip = true;
+      if (!_skip) {
+        propValue = obj["x()"];
+        if (propValue != null) {
+          isDivert = true;
+          external = true;
+          pushesToStack = false;
+          divPushType = PushPopType.Function;
+          _skip = true;
+        }
       }
 
       if (isDivert) {

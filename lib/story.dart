@@ -918,7 +918,7 @@ class Story extends RuntimeObject {
             var resultSeed = state.storySeed + state.previousRandom;
             var random = Random(resultSeed);
 
-            var nextRandom = random.nextInt(1 << 32);
+            var nextRandom = random.nextInt(1 << 32 - 1);
             var chosenValue = (nextRandom % randomRange) + minInt.value;
             state.PushEvaluationStack(IntValue(chosenValue));
 
@@ -1358,7 +1358,7 @@ class Story extends RuntimeObject {
     }
 
     for (int i = 0; i <= iterationIndex; ++i) {
-      var chosen = random.nextInt(1 << 32) % unpickedIndices.length;
+      var chosen = random.nextInt(1 << 32 - 1) % unpickedIndices.length;
       var chosenIndex = unpickedIndices[chosen];
       unpickedIndices.removeAt(chosen);
 

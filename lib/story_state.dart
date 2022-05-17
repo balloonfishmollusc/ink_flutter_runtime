@@ -295,7 +295,7 @@ class StoryState {
 
     // Seed the shuffle random numbers
     int timeSeed = DateTime.now().millisecond;
-    storySeed = (Random(timeSeed)).nextInt(1 << 32) % 100;
+    storySeed = (Random(timeSeed)).nextInt(1 << 32 - 1) % 100;
     previousRandom = 0;
 
     GoToStart();

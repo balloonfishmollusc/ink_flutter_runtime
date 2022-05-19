@@ -51,6 +51,23 @@ class Tests {
     return story;
   }
 
+  bool HadError([String? matchStr = null]) {
+    return HadErrorOrWarning(matchStr, _errorMessages);
+  }
+
+  bool HadErrorOrWarning(String? matchStr, List list) {
+    if (matchStr == null) return list.length > 0;
+
+    for (var str in list) {
+      if (str.contains(matchStr)) return true;
+    }
+    return false;
+  }
+
+  bool HadWarning([String? matchStr = null]) {
+    return HadErrorOrWarning(matchStr, _warningMessages);
+  }
+
   void OnError(String message, ErrorType errorType) {
     if (_testingErrors) {
       if (errorType == ErrorType.Error) {
@@ -214,8 +231,7 @@ Shuffle once: {f_shuffle_once()} {f_shuffle_once()} {f_shuffle_once()} {f_shuffl
                 ''';
 
     Story story = await tests.CompileString(storyStr);
-    expect(story.ContinueMaximally(),
-        r'''Once: one two
+    expect(story.ContinueMaximally(), r'''Once: one two
 Stopping: one two two two
 Default: one two two two
 Cycle: one two one two
@@ -224,4 +240,427 @@ Shuffle stopping: two one final final
 Shuffle once: one two
 ''');
   });
+
+  test("TestCallStackEvaluation", () async {
+    var storyStr = r'''
+                   { six() + two() }
+                    -> END
+
+                === function six
+                    ~ return four() + two()
+
+                === function four
+                    ~ return two() + two()
+
+                === function two
+                    ~ return 2
+''';
+
+    Story story = await tests.CompileString(storyStr);
+    expect(story.Continue(), r'''8
+''');
+  });
+
+  test("TestChoiceCount", () async {
+    Story story = await tests.CompileString(r'''
+<- choices
+{ CHOICE_COUNT() }
+
+= end
+-> END
+
+= choices
+* one -> end
+* two -> end
+''');
+    expect(story.ContinueMaximally(), r'''2
+''');
+  });
+
+  test("TestChoiceDivertsToDone", () async {
+    var story = await tests.CompileString(r'* choice -> DONE');
+    story.Continue();
+
+    expect(story.currentChoices.length, 1);
+    story.ChooseChoiceIndex(0);
+
+    expect(story.Continue(), 'choice');
+  });
+
+  test("TestChoiceWithBracketsOnly", () async {
+    var storyStr = '*   [Option]\n    Text';
+
+    Story story = await tests.CompileString(storyStr);
+    story.Continue();
+
+    expect(story.currentChoices.length, 1);
+    expect(story.currentChoices[0].text, 'Option');
+
+    story.ChooseChoiceIndex(0);
+
+    expect(story.Continue(), r'''Text
+''');
+  });
+
+  test("TestCompareDivertTargets", () async {
+    var storyStr = r'''
+VAR to_one = -> one
+VAR to_two = -> two
+
+{to_one == to_two:same knot|different knot}
+{to_one == to_one:same knot|different knot}
+{to_two == to_two:same knot|different knot}
+{ -> one == -> two:same knot|different knot}
+{ -> one == to_one:same knot|different knot}
+{ to_one == -> one:same knot|different knot}
+
+== one
+    One
+    -> DONE
+
+=== two
+    Two
+    -> DONE''';
+
+    Story story = await tests.CompileString(storyStr);
+
+    expect(story.ContinueMaximally(),
+        'different knot\nsame knot\nsame knot\ndifferent knot\nsame knot\nsame knot\n');
+  });
+
+  test("TestComplexTunnels", () async {
+    Story story = await tests.CompileString(r'''
+-> one (1) -> two (2) ->
+three (3)
+
+== one(num) ==
+one ({num})
+-> oneAndAHalf (1.5) ->
+->->
+
+== oneAndAHalf(num) ==
+one and a half ({num})
+->->
+
+== two (num) ==
+two ({num})
+->->
+''');
+
+    expect(story.ContinueMaximally(),
+        'one (1)\none and a half (1.5)\ntwo (2)\nthree (3)\n');
+  });
+
+  test("TestConditionalChoiceInWeave", () async {
+    var storyStr = r'''
+- start
+ {
+    - true: * [go to a stitch] -> a_stitch
+ }
+- gather should be seen
+-> DONE
+
+= a_stitch
+    result
+    -> END
+                ''';
+
+    Story story = await tests.CompileString(storyStr);
+
+    expect(story.ContinueMaximally(), 'start\ngather should be seen\n');
+    expect(story.currentChoices.length, 1);
+
+    story.ChooseChoiceIndex(0);
+
+    expect(story.Continue(), "result\n");
+  });
+
+  test("TestConditionalChoiceInWeave2", () async {
+    var storyStr = r'''
+- first gather
+    * [option 1]
+    * [option 2]
+- the main gather
+{false:
+    * unreachable option -> END
+}
+- bottom gather''';
+
+    Story story = await tests.CompileString(storyStr);
+
+    expect("first gather\n", story.Continue());
+
+    expect(2, story.currentChoices.length);
+
+    story.ChooseChoiceIndex(0);
+
+    expect("the main gather\nbottom gather\n", story.ContinueMaximally());
+    expect(0, story.currentChoices.length);
+  });
+
+  test("TestConditionalChoices", () async {
+    var storyStr = r'''
+* { true } { false } not displayed
+* { true } { true }
+  { true and true }  one
+* { false } not displayed
+* (name) { true } two
+* { true }
+  { true }
+  three
+* { true }
+  four
+                ''';
+
+    Story story = await tests.CompileString(storyStr);
+    story.ContinueMaximally();
+
+    expect(4, story.currentChoices.length);
+    expect("one", story.currentChoices[0].text);
+    expect("two", story.currentChoices[1].text);
+    expect("three", story.currentChoices[2].text);
+    expect("four", story.currentChoices[3].text);
+  });
+
+  test("TestConditionals", () async {
+    var storyStr = r'''
+{false:not true|true}
+{
+   - 4 > 5: not true
+   - 5 > 4: true
+}
+{ 2*2 > 3:
+   - true
+   - not true
+}
+{
+   - 1 > 3: not true
+   - { 2+2 == 4:
+        - true
+        - not true
+   }
+}
+{ 2*3:
+   - 1+7: not true
+   - 9: not true
+   - 1+1+1+3: true
+   - 9-3: also true but not printed
+}
+{ true:
+    great
+    right?
+}
+                ''';
+
+    Story story = await tests.CompileString(storyStr);
+
+    expect("true\ntrue\ntrue\ntrue\ntrue\ngreat\nright?\n",
+        story.ContinueMaximally());
+  });
+
+  test("TestConst", () async {
+    var story = await tests.CompileString(r'''
+VAR x = c
+
+CONST c = 5
+
+{x}
+''');
+    expect("5\n", story.Continue());
+  });
+
+  test("TestDefaultChoices", () async {
+    Story story = await tests.CompileString(r'''
+ - (start)
+ * [Choice 1]
+ * [Choice 2]
+ * {false} Impossible choice
+ * -> default
+ - After choice
+ -> start
+
+== default ==
+This is default.
+-> DONE
+''');
+
+    expect("", story.Continue());
+    expect(2, story.currentChoices.length);
+
+    story.ChooseChoiceIndex(0);
+    expect("After choice\n", story.Continue());
+
+    expect(1, story.currentChoices.length);
+
+    story.ChooseChoiceIndex(0);
+    expect("After choice\nThis is default.\n", story.ContinueMaximally());
+  });
+
+  test("TestDefaultSimpleGather", () async {
+    var story = await tests.CompileString(r'''
+* ->
+- x
+-> DONE''');
+
+    expect("x\n", story.Continue());
+  });
+
+  test("TestDivertInConditional", () async {
+    var storyStr = r'''
+=== intro
+= top
+    { main: -> done }
+    -> END
+= main
+    -> top
+= done
+    -> END
+                ''';
+
+    Story story = await tests.CompileString(storyStr);
+    expect("", story.ContinueMaximally());
+  });
+
+  test("TestDivertToWeavePoints", () async {
+    var storyStr = r'''
+-> knot.stitch.gather
+
+== knot ==
+= stitch
+- hello
+    * (choice) test
+        choice content
+- (gather)
+  gather
+
+  {stopping:
+    - -> knot.stitch.choice
+    - second time round
+  }
+
+-> END
+                ''';
+
+    Story story = await tests.CompileString(storyStr);
+
+    expect("gather\ntest\nchoice content\ngather\nsecond time round\n",
+        story.ContinueMaximally());
+  });
+
+  test("TestElseBranches", () async {
+    var storyStr = r'''
+VAR x = 3
+
+{
+    - x == 1: one
+    - x == 2: two
+    - else: other
+}
+
+{
+    - x == 1: one
+    - x == 2: two
+    - other
+}
+
+{ x == 4:
+  - The main clause
+  - else: other
+}
+
+{ x == 4:
+  The main clause
+- else:
+  other
+}
+''';
+
+    Story story = await tests.CompileString(storyStr);
+
+    expect("other\nother\nother\nother\n", story.ContinueMaximally());
+  });
+
+  test("TestEmpty", () async {
+    Story story = await tests.CompileString(r"");
+
+    expect('', story.currentText);
+  });
+  test("TestEmptyMultilineConditionalBranch", () async {
+    var story = await tests.CompileString(r'''
+{ 3:
+    - 3:
+    - 4:
+        txt
+}
+''');
+
+    expect("", story.Continue());
+  });
+  test("TestAllSwitchBranchesFailIsClean", () async {
+    var story = await tests.CompileString(r'''
+{ 1:
+    - 2: x
+    - 3: y
+}
+        ''');
+
+    story.Continue();
+
+    expect(story.state.evaluationStack.length, 0);
+  });
+  test("TestTrivialCondition", () async {
+    var story = await tests.CompileString(r'''
+{
+- false:
+   beep
+}
+                ''');
+
+    story.Continue();
+  });
+  test("TestEmptySequenceContent", () async {
+    var story = await tests.CompileString(r'''
+-> thing ->
+-> thing ->
+-> thing ->
+-> thing ->
+-> thing ->
+Done.
+
+== thing ==
+{once:
+  - Wait for it....
+  -
+  -
+  -  Surprise!
+}
+->->
+''');
+    expect("Wait for it....\nSurprise!\nDone.\n", story.ContinueMaximally());
+  });
+  test("TestEnd", () async {
+    Story story = await tests.CompileString(r'''
+hello
+-> END
+world
+-> END
+''');
+
+    expect("hello\n", story.ContinueMaximally());
+  });
+  test("TestEnd2", () async {
+    Story story = await tests.CompileString(r'''
+-> test
+
+== test ==
+hello
+-> END
+world
+-> END
+''');
+
+    expect("hello\n", story.ContinueMaximally());
+  });
+
+  test("name", () async {});
 }

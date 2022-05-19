@@ -172,7 +172,7 @@ Hello
 ".Replace("\r", ""), story.ContinueMaximally().Replace("\r", ""));
         }
 
-        [Test()]
+        [okTest()]
         public void TestAllSequenceTypes()
         {
             var storyStr =
@@ -233,7 +233,7 @@ Shuffle once: {f_shuffle_once()} {f_shuffle_once()} {f_shuffle_once()} {f_shuffl
         }
 
 
-        [Test()]
+        [okTest()]
         public void TestCallStackEvaluation()
         {
             var storyStr =
@@ -255,7 +255,7 @@ Shuffle once: {f_shuffle_once()} {f_shuffle_once()} {f_shuffle_once()} {f_shuffl
             Assert.AreEqual("8\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestChoiceCount()
         {
             Story story = CompileString(@"
@@ -273,7 +273,7 @@ Shuffle once: {f_shuffle_once()} {f_shuffle_once()} {f_shuffle_once()} {f_shuffl
             Assert.AreEqual("2\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestChoiceDivertsToDone()
         {
             var story = CompileString(@"* choice -> DONE");
@@ -286,7 +286,7 @@ Shuffle once: {f_shuffle_once()} {f_shuffle_once()} {f_shuffle_once()} {f_shuffl
             Assert.AreEqual("choice", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestChoiceWithBracketsOnly()
         {
             var storyStr = "*   [Option]\n    Text";
@@ -302,7 +302,7 @@ Shuffle once: {f_shuffle_once()} {f_shuffle_once()} {f_shuffle_once()} {f_shuffl
             Assert.AreEqual("Text\n", story.Continue());
         }
 
-        [Test()]
+        [xTest()]
         public void TestCommentEliminator()
         {
             var testContent =
@@ -323,7 +323,7 @@ C C C
         }
 
         //------------------------------------------------------------------------
-        [Test()]
+        [xTest()]
         public void TestCommentEliminatorMixedNewlines()
         {
             var testContent =
@@ -338,7 +338,7 @@ C C C
             Assert.AreEqual(expected, result);
         }
 
-        [Test()]
+        [okTest()]
         public void TestCompareDivertTargets()
         {
             var storyStr = @"
@@ -365,7 +365,7 @@ VAR to_two = -> two
             Assert.AreEqual("different knot\nsame knot\nsame knot\ndifferent knot\nsame knot\nsame knot\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestComplexTunnels()
         {
             Story story = CompileString(@"
@@ -389,7 +389,7 @@ two ({num})
             Assert.AreEqual("one (1)\none and a half (1"+ System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator+"5)\ntwo (2)\nthree (3)\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestConditionalChoiceInWeave()
         {
             var storyStr =
@@ -416,7 +416,7 @@ two ({num})
             Assert.AreEqual("result\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestConditionalChoiceInWeave2()
         {
             var storyStr =
@@ -442,7 +442,7 @@ two ({num})
             Assert.AreEqual(0, story.currentChoices.Count);
         }
 
-        [Test()]
+        [okTest()]
         public void TestConditionalChoices()
         {
             var storyStr =
@@ -469,7 +469,7 @@ two ({num})
             Assert.AreEqual("four", story.currentChoices[3].text);
         }
 
-        [Test()]
+        [okTest()]
         public void TestConditionals()
         {
             var storyStr =
@@ -507,7 +507,7 @@ two ({num})
             Assert.AreEqual("true\ntrue\ntrue\ntrue\ntrue\ngreat\nright?\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestConst()
         {
             var story = CompileString(@"
@@ -520,7 +520,7 @@ CONST c = 5
             Assert.AreEqual("5\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestDefaultChoices()
         {
             Story story = CompileString(@"
@@ -549,7 +549,7 @@ This is default.
             Assert.AreEqual("After choice\nThis is default.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestDefaultSimpleGather()
         {
             var story = CompileString(@"
@@ -560,7 +560,7 @@ This is default.
             Assert.AreEqual("x\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestDivertInConditional()
         {
             var storyStr =
@@ -579,7 +579,7 @@ This is default.
             Assert.AreEqual("", story.ContinueMaximally());
         }
 
-        [Test()]
+        [xTest()]
         public void TestDivertNotFoundError()
         {
             CompileStringWithoutRuntime(@"
@@ -593,7 +593,7 @@ Knot.
             Assert.IsTrue(HadError("not found"));
         }
 
-        [Test()]
+        [okTest()]
         public void TestDivertToWeavePoints()
         {
             var storyStr =
@@ -621,6 +621,7 @@ Knot.
             Assert.AreEqual("gather\ntest\nchoice content\ngather\nsecond time round\n", story.ContinueMaximally());
         }
 
+        [okTest()]
         public void TestElseBranches()
         {
             var storyStr =
@@ -656,7 +657,7 @@ VAR x = 3
             Assert.AreEqual("other\nother\nother\nother\n", story.currentText);
         }
 
-        [Test()]
+        [okTest()]
         public void TestEmpty()
         {
             Story story = CompileString(@"");
@@ -664,7 +665,7 @@ VAR x = 3
             Assert.AreEqual(string.Empty, story.currentText);
         }
 
-        [Test()]
+        [xTest()]
         public void TestEmptyChoice()
         {
             int warningCount = 0;
@@ -686,7 +687,7 @@ VAR x = 3
             Assert.AreEqual(1, warningCount);
         }
 
-        [Test()]
+        [okTest()]
         public void TestEmptyMultilineConditionalBranch()
         {
             var story = CompileString(@"
@@ -701,7 +702,7 @@ VAR x = 3
         }
 
 
-        [Test ()]
+        [okTest ()]
         public void TestAllSwitchBranchesFailIsClean ()
         {
         	var story = CompileString (@"
@@ -716,7 +717,7 @@ VAR x = 3
         	Assert.IsTrue (story.state.evaluationStack.Count == 0);
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestTrivialCondition ()
         {
         	var story = CompileString (@"
@@ -729,7 +730,7 @@ VAR x = 3
         	story.Continue ();
         }
 
-        [Test()]
+        [okTest()]
         public void TestEmptySequenceContent()
         {
             var story = CompileString(@"
@@ -752,7 +753,7 @@ Done.
             Assert.AreEqual("Wait for it....\nSurprise!\nDone.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestEnd()
         {
             Story story = CompileString(@"
@@ -781,7 +782,7 @@ world
             Assert.AreEqual("hello\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [xTest()]
         public void TestEndOfContent()
         {
             Story story = CompileString("Hello world", false, true);

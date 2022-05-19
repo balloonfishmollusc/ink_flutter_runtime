@@ -129,7 +129,7 @@ class Json {
     var divTargetVal = obj.csAs<DivertTargetValue>();
     if (divTargetVal != null) {
       var dict = <String, dynamic>{};
-      dict["^->"] = divTargetVal.value!.componentsString;
+      dict["^->"] = divTargetVal.value.componentsString;
       return dict;
     }
 

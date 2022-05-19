@@ -178,11 +178,11 @@ class StringValue extends Value<String> {
   ValueType get valueType => ValueType.String;
 }
 
-class DivertTargetValue extends Value<Path?> {
-  DivertTargetValue([Path? value]) : super(value);
+class DivertTargetValue extends Value<Path> {
+  DivertTargetValue(Path value) : super(value);
 
-  Path? get targetPath => value;
-  set targetPath(Path? value) => this.value = value;
+  Path get targetPath => value;
+  set targetPath(Path value) => this.value = value;
 
   @override
   Value Cast(ValueType newType) {

@@ -697,7 +697,7 @@ class Story extends RuntimeObject {
         }
 
         var target = varContents as DivertTargetValue;
-        state.divertedPointer = PointerAtPath(target.targetPath!);
+        state.divertedPointer = PointerAtPath(target.targetPath);
       } else if (currentDivert.isExternal) {
         CallExternalFunction(
             currentDivert.targetPathString!, currentDivert.externalArgs);
@@ -798,7 +798,7 @@ class Story extends RuntimeObject {
 
             if (overrideTunnelReturnTarget != null) {
               state.divertedPointer =
-                  PointerAtPath(overrideTunnelReturnTarget.targetPath!);
+                  PointerAtPath(overrideTunnelReturnTarget.targetPath);
             }
           }
 
@@ -870,7 +870,7 @@ class Story extends RuntimeObject {
           }
 
           var divertTarget = target.csAs<DivertTargetValue>();
-          var container = ContentAtPath(divertTarget!.targetPath!)
+          var container = ContentAtPath(divertTarget!.targetPath)
               .correctObj
               ?.csAs<Container>();
 

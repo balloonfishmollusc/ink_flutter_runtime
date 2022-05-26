@@ -1,8 +1,5 @@
-import 'dart:ffi';
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:process_run/shell.dart';
 import 'package:ink_flutter_runtime/story.dart';
 import 'package:ink_flutter_runtime/error.dart';
 
@@ -17,8 +14,8 @@ class Tests {
 
   Tests(this._mode);
 
-  Future<Story> CompileString(String str,
-      {bool testingErrors = false, bool copyIncludes = false}) async {
+  Story CompileString(String str,
+      {bool testingErrors = false, bool copyIncludes = false}) {
     _testingErrors = testingErrors;
     _errorMessages.clear();
     _warningMessages.clear();
@@ -28,26 +25,23 @@ class Tests {
     if (cacheDir.existsSync()) cacheDir.deleteSync(recursive: true);
     cacheDir.createSync();
 
-    var shell = Shell(workingDirectory: "test");
-
     if (copyIncludes) {
       if (Platform.isWindows) {
-        await shell
-            .run("robocopy ./ ./cache *.ink")
-            .onError((error, stackTrace) => []);
+        Process.runSync("robocopy", ["./", "./cache", "*.ink"],
+            workingDirectory: "test");
       } else {
-        await shell.run("cp *.ink cache/");
+        Process.runSync("cp", ["*.ink", "cache/"], workingDirectory: "test");
       }
     }
 
     File("${cacheDir.path}/main.ink").writeAsStringSync(str);
 
-    var processResults = await shell.run(
-        "${Platform.isWindows ? 'dotnet' : 'mono'} ./inklecate.dll -j cache/main.ink");
+    var processResult = Process.runSync(Platform.isWindows ? 'dotnet' : 'mono',
+        ["./inklecate.dll", "-j", "cache/main.ink"], workingDirectory: 'test');
 
-    String shellOutput = processResults.first.outText;
+    String shellOutput = processResult.stdout;
     if (!shellOutput.contains('{"compile-success": true}')) {
-      throw Exception("编译失败");
+      throw Exception("编译失败！\n" + shellOutput);
     }
 
     String inkJson = File("${cacheDir.path}/main.ink.json").readAsStringSync();
@@ -65,7 +59,7 @@ class Tests {
     return story;
   }
 
-  bool HadError([String? matchStr = null]) {
+  bool HadError([String? matchStr]) {
     return HadErrorOrWarning(matchStr, _errorMessages);
   }
 
@@ -78,7 +72,7 @@ class Tests {
     return false;
   }
 
-  bool HadWarning([String? matchStr = null]) {
+  bool HadWarning([String? matchStr]) {
     return HadErrorOrWarning(matchStr, _warningMessages);
   }
 
@@ -100,7 +94,7 @@ class Tests {
 void main() {
   Tests tests = Tests(TestMode.Normal);
 
-  test('TestArithmetic', () async {
+  test('TestArithmetic', () {
     var storyStr = r"""
 { 2 * 3 + 5 * 6 }
 {8 mod 3}
@@ -110,12 +104,12 @@ void main() {
 { 10 - 2 }
 { 2 * (5-1) }
 """;
-    var story = await tests.CompileString(storyStr);
+    var story = tests.CompileString(storyStr);
     expect(story.ContinueMaximally(), "36\n2\n3\n2\n2.3333333\n8\n8\n");
   });
 
-  test("TestBasicStringLiterals", () async {
-    var story = await tests.CompileString(r'''
+  test("TestBasicStringLiterals", () {
+    var story = tests.CompileString(r'''
 VAR x = "Hello world 1"
 {x}
 Hello {"world"} 2.
@@ -123,8 +117,8 @@ Hello {"world"} 2.
     expect(story.ContinueMaximally(), "Hello world 1\nHello world 2.\n");
   });
 
-  test("TestBasicTunnel", () async {
-    Story story = await tests.CompileString(r'''
+  test("TestBasicTunnel", () {
+    Story story = tests.CompileString(r'''
 -> f ->
 <> world
 
@@ -136,8 +130,8 @@ Hello
     expect(story.Continue(), "Hello world\n");
   });
 
-  test("TestBlanksInInlineSequences", () async {
-    var story = await tests.CompileString(r'''
+  test("TestBlanksInInlineSequences", () {
+    var story = tests.CompileString(r'''
 1. -> seq1 ->
 2. -> seq1 ->
 3. -> seq1 ->
@@ -191,7 +185,7 @@ Hello
 ''');
   });
 
-  test("TestAllSequenceTypes", () async {
+  test("TestAllSequenceTypes", () {
     var storyStr = r'''
 ~ SEED_RANDOM(1)
 
@@ -244,7 +238,7 @@ Shuffle once: {f_shuffle_once()} {f_shuffle_once()} {f_shuffle_once()} {f_shuffl
 }
                 ''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
     expect(story.ContinueMaximally(), r'''Once: one two
 Stopping: one two two two
 Default: one two two two
@@ -255,7 +249,7 @@ Shuffle once: one two
 ''');
   });
 
-  test("TestCallStackEvaluation", () async {
+  test("TestCallStackEvaluation", () {
     var storyStr = r'''
                    { six() + two() }
                     -> END
@@ -270,13 +264,13 @@ Shuffle once: one two
                     ~ return 2
 ''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
     expect(story.Continue(), r'''8
 ''');
   });
 
-  test("TestChoiceCount", () async {
-    Story story = await tests.CompileString(r'''
+  test("TestChoiceCount", () {
+    Story story = tests.CompileString(r'''
 <- choices
 { CHOICE_COUNT() }
 
@@ -291,8 +285,8 @@ Shuffle once: one two
 ''');
   });
 
-  test("TestChoiceDivertsToDone", () async {
-    var story = await tests.CompileString(r'* choice -> DONE');
+  test("TestChoiceDivertsToDone", () {
+    var story = tests.CompileString(r'* choice -> DONE');
     story.Continue();
 
     expect(story.currentChoices.length, 1);
@@ -301,10 +295,10 @@ Shuffle once: one two
     expect(story.Continue(), 'choice');
   });
 
-  test("TestChoiceWithBracketsOnly", () async {
+  test("TestChoiceWithBracketsOnly", () {
     var storyStr = '*   [Option]\n    Text';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
     story.Continue();
 
     expect(story.currentChoices.length, 1);
@@ -316,7 +310,7 @@ Shuffle once: one two
 ''');
   });
 
-  test("TestCompareDivertTargets", () async {
+  test("TestCompareDivertTargets", () {
     var storyStr = r'''
 VAR to_one = -> one
 VAR to_two = -> two
@@ -336,14 +330,14 @@ VAR to_two = -> two
     Two
     -> DONE''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
 
     expect(story.ContinueMaximally(),
         'different knot\nsame knot\nsame knot\ndifferent knot\nsame knot\nsame knot\n');
   });
 
-  test("TestComplexTunnels", () async {
-    Story story = await tests.CompileString(r'''
+  test("TestComplexTunnels", () {
+    Story story = tests.CompileString(r'''
 -> one (1) -> two (2) ->
 three (3)
 
@@ -365,7 +359,7 @@ two ({num})
         'one (1)\none and a half (1.5)\ntwo (2)\nthree (3)\n');
   });
 
-  test("TestConditionalChoiceInWeave", () async {
+  test("TestConditionalChoiceInWeave", () {
     var storyStr = r'''
 - start
  {
@@ -379,7 +373,7 @@ two ({num})
     -> END
                 ''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
 
     expect(story.ContinueMaximally(), 'start\ngather should be seen\n');
     expect(story.currentChoices.length, 1);
@@ -389,7 +383,7 @@ two ({num})
     expect(story.Continue(), "result\n");
   });
 
-  test("TestConditionalChoiceInWeave2", () async {
+  test("TestConditionalChoiceInWeave2", () {
     var storyStr = r'''
 - first gather
     * [option 1]
@@ -400,7 +394,7 @@ two ({num})
 }
 - bottom gather''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
 
     expect("first gather\n", story.Continue());
 
@@ -412,7 +406,7 @@ two ({num})
     expect(0, story.currentChoices.length);
   });
 
-  test("TestConditionalChoices", () async {
+  test("TestConditionalChoices", () {
     var storyStr = r'''
 * { true } { false } not displayed
 * { true } { true }
@@ -426,7 +420,7 @@ two ({num})
   four
                 ''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
     story.ContinueMaximally();
 
     expect(4, story.currentChoices.length);
@@ -436,7 +430,7 @@ two ({num})
     expect("four", story.currentChoices[3].text);
   });
 
-  test("TestConditionals", () async {
+  test("TestConditionals", () {
     var storyStr = r'''
 {false:not true|true}
 {
@@ -466,14 +460,14 @@ two ({num})
 }
                 ''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
 
     expect("true\ntrue\ntrue\ntrue\ntrue\ngreat\nright?\n",
         story.ContinueMaximally());
   });
 
-  test("TestConst", () async {
-    var story = await tests.CompileString(r'''
+  test("TestConst", () {
+    var story = tests.CompileString(r'''
 VAR x = c
 
 CONST c = 5
@@ -483,8 +477,8 @@ CONST c = 5
     expect("5\n", story.Continue());
   });
 
-  test("TestDefaultChoices", () async {
-    Story story = await tests.CompileString(r'''
+  test("TestDefaultChoices", () {
+    Story story = tests.CompileString(r'''
  - (start)
  * [Choice 1]
  * [Choice 2]
@@ -510,8 +504,8 @@ This is default.
     expect("After choice\nThis is default.\n", story.ContinueMaximally());
   });
 
-  test("TestDefaultSimpleGather", () async {
-    var story = await tests.CompileString(r'''
+  test("TestDefaultSimpleGather", () {
+    var story = tests.CompileString(r'''
 * ->
 - x
 -> DONE''');
@@ -519,7 +513,7 @@ This is default.
     expect("x\n", story.Continue());
   });
 
-  test("TestDivertInConditional", () async {
+  test("TestDivertInConditional", () {
     var storyStr = r'''
 === intro
 = top
@@ -531,11 +525,11 @@ This is default.
     -> END
                 ''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
     expect("", story.ContinueMaximally());
   });
 
-  test("TestDivertToWeavePoints", () async {
+  test("TestDivertToWeavePoints", () {
     var storyStr = r'''
 -> knot.stitch.gather
 
@@ -555,13 +549,13 @@ This is default.
 -> END
                 ''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
 
     expect("gather\ntest\nchoice content\ngather\nsecond time round\n",
         story.ContinueMaximally());
   });
 
-  test("TestElseBranches", () async {
+  test("TestElseBranches", () {
     var storyStr = r'''
 VAR x = 3
 
@@ -589,18 +583,18 @@ VAR x = 3
 }
 ''';
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
 
     expect("other\nother\nother\nother\n", story.ContinueMaximally());
   });
 
-  test("TestEmpty", () async {
-    Story story = await tests.CompileString(r"");
+  test("TestEmpty", () {
+    Story story = tests.CompileString(r"");
 
     expect('', story.currentText);
   });
-  test("TestEmptyMultilineConditionalBranch", () async {
-    var story = await tests.CompileString(r'''
+  test("TestEmptyMultilineConditionalBranch", () {
+    var story = tests.CompileString(r'''
 { 3:
     - 3:
     - 4:
@@ -610,8 +604,8 @@ VAR x = 3
 
     expect("", story.Continue());
   });
-  test("TestAllSwitchBranchesFailIsClean", () async {
-    var story = await tests.CompileString(r'''
+  test("TestAllSwitchBranchesFailIsClean", () {
+    var story = tests.CompileString(r'''
 { 1:
     - 2: x
     - 3: y
@@ -622,8 +616,8 @@ VAR x = 3
 
     expect(story.state.evaluationStack.length, 0);
   });
-  test("TestTrivialCondition", () async {
-    var story = await tests.CompileString(r'''
+  test("TestTrivialCondition", () {
+    var story = tests.CompileString(r'''
 {
 - false:
    beep
@@ -632,8 +626,8 @@ VAR x = 3
 
     story.Continue();
   });
-  test("TestEmptySequenceContent", () async {
-    var story = await tests.CompileString(r'''
+  test("TestEmptySequenceContent", () {
+    var story = tests.CompileString(r'''
 -> thing ->
 -> thing ->
 -> thing ->
@@ -652,8 +646,8 @@ Done.
 ''');
     expect("Wait for it....\nSurprise!\nDone.\n", story.ContinueMaximally());
   });
-  test("TestEnd", () async {
-    Story story = await tests.CompileString(r'''
+  test("TestEnd", () {
+    Story story = tests.CompileString(r'''
 hello
 -> END
 world
@@ -662,8 +656,8 @@ world
 
     expect("hello\n", story.ContinueMaximally());
   });
-  test("TestEnd2", () async {
-    Story story = await tests.CompileString(r'''
+  test("TestEnd2", () {
+    Story story = tests.CompileString(r'''
 -> test
 
 == test ==
@@ -676,16 +670,16 @@ world
     expect("hello\n", story.ContinueMaximally());
   });
 
-  test("TestEscapeCharacter", () async {
+  test("TestEscapeCharacter", () {
     var storyStr = r"{true:this is a '\|' character|this isn't}";
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
 
     expect("this is a '|' character\n", story.ContinueMaximally());
   });
 
-  test("TestObjectMethodCall", () async {
-    var story = await tests.CompileString(r"""
+  test("TestObjectMethodCall", () {
+    var story = tests.CompileString(r"""
 VAR a = 4
 {a.add(5)}
 {add(3, a.add(8))}
@@ -702,8 +696,8 @@ VAR a = 4
     return args.join(",");
   }
 
-  test("TestExternalBindingWithVariableArguments", () async {
-    var story = await tests.CompileString(r"""
+  test("TestExternalBindingWithVariableArguments", () {
+    var story = tests.CompileString(r"""
 EXTERNAL array()
 {array(1,2,3,4,5,6)}
 """);
@@ -712,8 +706,8 @@ EXTERNAL array()
 
     expect("1,2,3,4,5,6", story.Continue().trim());
   });
-  test("TestExternalBinding", () async {
-    var story = await tests.CompileString(r"""
+  test("TestExternalBinding", () {
+    var story = tests.CompileString(r"""
 EXTERNAL message(x)
 EXTERNAL multiply(x,y)
 EXTERNAL times(i,str)
@@ -721,7 +715,7 @@ EXTERNAL times(i,str)
 {multiply(5.0, 3)}
 {times(3, "knock ")}
 """);
-    String? message = null;
+    String? message;
 
     story.BindExternalFunctionGeneral("message", (List arg) {
       message = "MESSAGE: " + arg[0];
@@ -749,8 +743,8 @@ EXTERNAL times(i,str)
 
     expect("MESSAGE: hello world", message);
   });
-  test("TestLookupSafeOrNot", () async {
-    var story = await tests.CompileString(r"""
+  test("TestLookupSafeOrNot", () {
+    var story = tests.CompileString(r"""
 EXTERNAL myAction()
 
 One
@@ -779,7 +773,7 @@ Two
     expect(1, callCount);
 
     // Lookahead SAFE but breaks glue intentionally
-    var storyWithPostGlue = await tests.CompileString(r"""
+    var storyWithPostGlue = tests.CompileString(r"""
 EXTERNAL myAction()
 
 One 
@@ -792,7 +786,7 @@ One
     var result = storyWithPostGlue.ContinueMaximally();
     expect("One\nTwo\n", result);
   });
-  test("TestFactorialByReference", () async {
+  test("TestFactorialByReference", () {
     var storyStr = r"""
 VAR result = 0
 ~ factorialByRef(result, 5)
@@ -809,11 +803,11 @@ VAR result = 0
 ~ return
 """;
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
 
     expect("120\n", story.ContinueMaximally());
   });
-  test("TestFactorialRecursive", () async {
+  test("TestFactorialRecursive", () {
     var storyStr = r"""
 { factorial(5) }
 
@@ -825,14 +819,14 @@ VAR result = 0
  }
 """;
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
 
     expect("120\n", story.ContinueMaximally());
   });
-  test("TestGatherChoiceSameLine", () async {
+  test("TestGatherChoiceSameLine", () {
     var storyStr = "- * hello\n- * world";
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
     story.Continue();
 
     expect("hello", story.currentChoices[0].text);
@@ -842,8 +836,8 @@ VAR result = 0
 
     expect("world", story.currentChoices[0].text);
   });
-  test("TestGatherReadCountWithInitialSequence", () async {
-    var story = await tests.CompileString(r"""
+  test("TestGatherReadCountWithInitialSequence", () {
+    var story = tests.CompileString(r"""
 - (opts)
 {test:seen test}
 - (test)
@@ -852,7 +846,7 @@ VAR result = 0
 
     expect("seen test\n", story.Continue());
   });
-  test("TestHasReadOnChoice", () async {
+  test("TestHasReadOnChoice", () {
     var storyStr = r"""
 * { not test } visible choice
 * { test } visible choice
@@ -861,18 +855,18 @@ VAR result = 0
 -> END
                 """;
 
-    Story story = await tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr);
     story.ContinueMaximally();
 
     expect(1, story.currentChoices.length);
     expect("visible choice", story.currentChoices[0].text);
   });
-  test("TestHelloWorld", () async {
-    Story story = await tests.CompileString("Hello world");
+  test("TestHelloWorld", () {
+    Story story = tests.CompileString("Hello world");
     expect("Hello world\n", story.Continue());
   });
-  test("TestIdentifersCanStartWithNumbers", () async {
-    var story = await tests.CompileString(r"""
+  test("TestIdentifersCanStartWithNumbers", () {
+    var story = tests.CompileString(r"""
 -> 2tests
 == 2tests ==
 ~ temp 512x2 = 512 * 2
@@ -884,8 +878,8 @@ VAR result = 0
 
     expect("512x2 = 1024\n512x2p2 = 1026\n", story.ContinueMaximally());
   });
-  test("TestImplicitInlineGlue", () async {
-    var story = await tests.CompileString(r"""
+  test("TestImplicitInlineGlue", () {
+    var story = tests.CompileString(r"""
 I have {five()} eggs.
 
 == function five ==
@@ -897,8 +891,8 @@ five
 
     expect("I have five eggs.\n", story.Continue());
   });
-  test("TestImplicitInlineGlueB", () async {
-    var story = await tests.CompileString(r"""
+  test("TestImplicitInlineGlueB", () {
+    var story = tests.CompileString(r"""
 A {f():B} 
 X
 
@@ -910,8 +904,8 @@ X
 
     expect("A\nX\n", story.ContinueMaximally());
   });
-  test("TestImplicitInlineGlueC", () async {
-    var story = await tests.CompileString(r"""
+  test("TestImplicitInlineGlueC", () {
+    var story = tests.CompileString(r"""
 A
 {f():X}
 C
@@ -924,19 +918,19 @@ C
 
     expect("A\nC\n", story.ContinueMaximally());
   });
-  test("TestInclude", () async {
+  test("TestInclude", () {
     var storyStr = r"""
 INCLUDE test_included_file.ink
   INCLUDE test_included_file2.ink
 
 This is the main file.
                 """;
-    Story story = await tests.CompileString(storyStr, copyIncludes: true);
+    Story story = tests.CompileString(storyStr, copyIncludes: true);
     expect("This is include 1.\nThis is include 2.\nThis is the main file.\n",
         story.ContinueMaximally());
   });
-  test("TestIncrement", () async {
-    Story story = await tests.CompileString(r"""
+  test("TestIncrement", () {
+    Story story = tests.CompileString(r"""
 VAR x = 5
 ~ x++
 {x}
@@ -948,8 +942,8 @@ VAR x = 5
     expect("6\n5\n", story.ContinueMaximally());
   });
 
-  test("TestKnotDotGather", () async {
-    var story = await tests.CompileString(r"""
+  test("TestKnotDotGather", () {
+    var story = tests.CompileString(r"""
 -> knot
 === knot
 -> knot.gather
@@ -958,8 +952,8 @@ VAR x = 5
 
     expect("g\n", story.Continue());
   });
-  test("TestKnotThreadInteraction", () async {
-    Story story = await tests.CompileString(r"""
+  test("TestKnotThreadInteraction", () {
+    Story story = tests.CompileString(r"""
 -> knot
 === knot
     <- threadB
@@ -988,6 +982,6 @@ VAR x = 5
     expect("wigwag\n", story.Continue());
     expect("THE END\n", story.Continue());
   });
-  test("name", () async {});
-  test("name", () async {});
+  test("name", () {});
+  test("name", () {});
 }

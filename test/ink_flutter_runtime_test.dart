@@ -17,7 +17,8 @@ class Tests {
 
   Tests(this._mode);
 
-  Future<Story> CompileString(String str, {bool testingErrors = false}) async {
+  Future<Story> CompileString(String str,
+      {bool testingErrors = false, bool copyIncludes = false}) async {
     _testingErrors = testingErrors;
     _errorMessages.clear();
     _warningMessages.clear();
@@ -26,12 +27,18 @@ class Tests {
     var cacheDir = Directory("test/cache");
     if (cacheDir.existsSync()) cacheDir.deleteSync(recursive: true);
     cacheDir.createSync();
+
     var shell = Shell(workingDirectory: "test");
 
-    await shell.run("cp test_included_file.ink cache/");
-    await shell.run("cp test_included_file2.ink cache/");
-    await shell.run("cp test_included_file3.ink cache/");
-    await shell.run("cp test_included_file4.ink cache/");
+    if (copyIncludes) {
+      if (Platform.isWindows) {
+        await shell
+            .run("robocopy ./ ./cache *.ink")
+            .onError((error, stackTrace) => []);
+      } else {
+        await shell.run("cp *.ink cache/");
+      }
+    }
 
     File("${cacheDir.path}/main.ink").writeAsStringSync(str);
 
@@ -924,7 +931,7 @@ INCLUDE test_included_file.ink
 
 This is the main file.
                 """;
-    Story story = await tests.CompileString(storyStr);
+    Story story = await tests.CompileString(storyStr, copyIncludes: true);
     expect("This is include 1.\nThis is include 2.\nThis is the main file.\n",
         story.ContinueMaximally());
   });

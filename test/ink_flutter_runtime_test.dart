@@ -1,4 +1,6 @@
+import 'dart:ffi';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:process_run/shell.dart';
 import 'package:ink_flutter_runtime/story.dart';
@@ -24,10 +26,15 @@ class Tests {
     var cacheDir = Directory("test/cache");
     if (cacheDir.existsSync()) cacheDir.deleteSync(recursive: true);
     cacheDir.createSync();
+    var shell = Shell(workingDirectory: "test");
+
+    await shell.run("cp test_included_file.ink cache/");
+    await shell.run("cp test_included_file2.ink cache/");
+    await shell.run("cp test_included_file3.ink cache/");
+    await shell.run("cp test_included_file4.ink cache/");
 
     File("${cacheDir.path}/main.ink").writeAsStringSync(str);
 
-    var shell = Shell(workingDirectory: "test");
     var processResults = await shell.run(
         "${Platform.isWindows ? 'dotnet' : 'mono'} ./inklecate.dll -j cache/main.ink");
 
@@ -662,5 +669,318 @@ world
     expect("hello\n", story.ContinueMaximally());
   });
 
+  test("TestEscapeCharacter", () async {
+    var storyStr = r"{true:this is a '\|' character|this isn't}";
+
+    Story story = await tests.CompileString(storyStr);
+
+    expect("this is a '|' character\n", story.ContinueMaximally());
+  });
+
+  test("TestObjectMethodCall", () async {
+    var story = await tests.CompileString(r"""
+VAR a = 4
+{a.add(5)}
+{add(3, a.add(8))}
+{a.add(1).add(2).add(3)}
+== function add(x, y)
+~ return x + y
+""");
+    expect("9", story.Continue().trim());
+    expect("15", story.Continue().trim());
+    expect("10", story.Continue().trim());
+  });
+
+  String generalExternalFunction(List args) {
+    return args.join(",");
+  }
+
+  test("TestExternalBindingWithVariableArguments", () async {
+    var story = await tests.CompileString(r"""
+EXTERNAL array()
+{array(1,2,3,4,5,6)}
+""");
+
+    story.BindExternalFunctionGeneral("array", generalExternalFunction);
+
+    expect("1,2,3,4,5,6", story.Continue().trim());
+  });
+  test("TestExternalBinding", () async {
+    var story = await tests.CompileString(r"""
+EXTERNAL message(x)
+EXTERNAL multiply(x,y)
+EXTERNAL times(i,str)
+~ message("hello world")
+{multiply(5.0, 3)}
+{times(3, "knock ")}
+""");
+    String? message = null;
+
+    story.BindExternalFunctionGeneral("message", (List arg) {
+      message = "MESSAGE: " + arg[0];
+    });
+
+    story.BindExternalFunctionGeneral("multiply", (List arg) {
+      double arg1 = arg[0];
+      int arg2 = arg[1];
+      return arg1 * arg2;
+    });
+
+    story.BindExternalFunctionGeneral("times", (List arg) {
+      int numberOfTimes = arg[0];
+      String str = arg[1];
+      String result = "";
+      for (int i = 0; i < numberOfTimes; i++) {
+        result += str;
+      }
+      return result;
+    });
+
+    expect("15\n", story.Continue());
+
+    expect("knock knock knock\n", story.Continue());
+
+    expect("MESSAGE: hello world", message);
+  });
+  test("TestLookupSafeOrNot", () async {
+    var story = await tests.CompileString(r"""
+EXTERNAL myAction()
+
+One
+~ myAction()
+Two
+""");
+
+    // Lookahead SAFE - should get multiple calls to the ext function,
+    // one for lookahead on first line, one "for real" on second line.
+    int callCount = 0;
+    story.BindExternalFunctionGeneral(
+        "myAction", (List args) => callCount++, true);
+
+    story.ContinueMaximally();
+    expect(2, callCount);
+
+    // Lookahead UNSAFE - when it sees the function, it should break out early
+    // and stop lookahead, making sure that the action is only called for the second line.
+    callCount = 0;
+    story.ResetState();
+    story.UnbindExternalFunction("myAction");
+    story.BindExternalFunctionGeneral(
+        "myAction", (List args) => callCount++, false);
+
+    story.ContinueMaximally();
+    expect(1, callCount);
+
+    // Lookahead SAFE but breaks glue intentionally
+    var storyWithPostGlue = await tests.CompileString(r"""
+EXTERNAL myAction()
+
+One 
+~ myAction()
+<> Two
+""");
+
+    storyWithPostGlue.BindExternalFunctionGeneral(
+        "myAction", (List args) => null);
+    var result = storyWithPostGlue.ContinueMaximally();
+    expect("One\nTwo\n", result);
+  });
+  test("TestFactorialByReference", () async {
+    var storyStr = r"""
+VAR result = 0
+~ factorialByRef(result, 5)
+{ result }
+
+== function factorialByRef(ref r, n) ==
+{ r == 0:
+    ~ r = 1
+}
+{ n > 1:
+    ~ r = r * n
+    ~ factorialByRef(r, n-1)
+}
+~ return
+""";
+
+    Story story = await tests.CompileString(storyStr);
+
+    expect("120\n", story.ContinueMaximally());
+  });
+  test("TestFactorialRecursive", () async {
+    var storyStr = r"""
+{ factorial(5) }
+
+== function factorial(n) ==
+ { n == 1:
+    ~ return 1
+ - else:
+    ~ return (n * factorial(n-1))
+ }
+""";
+
+    Story story = await tests.CompileString(storyStr);
+
+    expect("120\n", story.ContinueMaximally());
+  });
+  test("TestGatherChoiceSameLine", () async {
+    var storyStr = "- * hello\n- * world";
+
+    Story story = await tests.CompileString(storyStr);
+    story.Continue();
+
+    expect("hello", story.currentChoices[0].text);
+
+    story.ChooseChoiceIndex(0);
+    story.Continue();
+
+    expect("world", story.currentChoices[0].text);
+  });
+  test("TestGatherReadCountWithInitialSequence", () async {
+    var story = await tests.CompileString(r"""
+- (opts)
+{test:seen test}
+- (test)
+{ -> opts |}
+""");
+
+    expect("seen test\n", story.Continue());
+  });
+  test("TestHasReadOnChoice", () async {
+    var storyStr = r"""
+* { not test } visible choice
+* { test } visible choice
+
+== test ==
+-> END
+                """;
+
+    Story story = await tests.CompileString(storyStr);
+    story.ContinueMaximally();
+
+    expect(1, story.currentChoices.length);
+    expect("visible choice", story.currentChoices[0].text);
+  });
+  test("TestHelloWorld", () async {
+    Story story = await tests.CompileString("Hello world");
+    expect("Hello world\n", story.Continue());
+  });
+  test("TestIdentifersCanStartWithNumbers", () async {
+    var story = await tests.CompileString(r"""
+-> 2tests
+== 2tests ==
+~ temp 512x2 = 512 * 2
+~ temp 512x2p2 = 512x2 + 2
+512x2 = {512x2}
+512x2p2 = {512x2p2}
+-> DONE
+""");
+
+    expect("512x2 = 1024\n512x2p2 = 1026\n", story.ContinueMaximally());
+  });
+  test("TestImplicitInlineGlue", () async {
+    var story = await tests.CompileString(r"""
+I have {five()} eggs.
+
+== function five ==
+{false:
+    Don't print this
+}
+five
+""");
+
+    expect("I have five eggs.\n", story.Continue());
+  });
+  test("TestImplicitInlineGlueB", () async {
+    var story = await tests.CompileString(r"""
+A {f():B} 
+X
+
+=== function f() ===
+{true: 
+    ~ return false
+}
+""");
+
+    expect("A\nX\n", story.ContinueMaximally());
+  });
+  test("TestImplicitInlineGlueC", () async {
+    var story = await tests.CompileString(r"""
+A
+{f():X}
+C
+
+=== function f()
+{ true: 
+    ~ return false
+}
+""");
+
+    expect("A\nC\n", story.ContinueMaximally());
+  });
+  test("TestInclude", () async {
+    var storyStr = r"""
+INCLUDE test_included_file.ink
+  INCLUDE test_included_file2.ink
+
+This is the main file.
+                """;
+    Story story = await tests.CompileString(storyStr);
+    expect("This is include 1.\nThis is include 2.\nThis is the main file.\n",
+        story.ContinueMaximally());
+  });
+  test("TestIncrement", () async {
+    Story story = await tests.CompileString(r"""
+VAR x = 5
+~ x++
+{x}
+
+~ x--
+{x}
+""");
+
+    expect("6\n5\n", story.ContinueMaximally());
+  });
+
+  test("TestKnotDotGather", () async {
+    var story = await tests.CompileString(r"""
+-> knot
+=== knot
+-> knot.gather
+- (gather) g
+-> DONE""");
+
+    expect("g\n", story.Continue());
+  });
+  test("TestKnotThreadInteraction", () async {
+    Story story = await tests.CompileString(r"""
+-> knot
+=== knot
+    <- threadB
+    -> tunnel ->
+    THE END
+    -> END
+
+=== tunnel
+    - blah blah
+    * wigwag
+    - ->->
+
+=== threadB
+    *   option
+    -   something
+        -> DONE
+""");
+
+    expect("blah blah\n", story.ContinueMaximally());
+
+    expect(2, story.currentChoices.length);
+    expect(story.currentChoices[0].text?.contains("option"), true);
+    expect(story.currentChoices[1].text?.contains("wigwag"), true);
+
+    story.ChooseChoiceIndex(1);
+    expect("wigwag\n", story.Continue());
+    expect("THE END\n", story.Continue());
+  });
+  test("name", () async {});
   test("name", () async {});
 }

@@ -810,7 +810,7 @@ world
             Assert.IsTrue(HadError("Functions may not contain diverts"));
         }
 
-        [Test()]
+        [okTest()]
         public void TestEscapeCharacter()
         {
             var storyStr = @"{true:this is a '\|' character|this isn't}";
@@ -820,7 +820,7 @@ world
             Assert.AreEqual("this is a '|' character\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestObjectMethodCall()
         {
             var story = CompileString(@"
@@ -841,7 +841,7 @@ VAR a = 4
             return string.Join(",", args);
         }
 
-        [Test()]
+        [okTest()]
         public void TestExternalBindingWithVariableArguments()
         {
             var story = CompileString(@"
@@ -854,7 +854,7 @@ EXTERNAL array()
             Assert.AreEqual("1,2,3,4,5,6", story.Continue().Trim());
         }
 
-        [Test()]
+        [okTest()]
         public void TestExternalBinding()
         {
             var story = CompileString(@"
@@ -894,7 +894,7 @@ EXTERNAL times(i,str)
             Assert.AreEqual("MESSAGE: hello world", message);
         }
 
-        [Test()]
+        [okTest()]
         public void TestLookupSafeOrNot()
         {
             var story = CompileString(@"
@@ -937,7 +937,7 @@ One
             Assert.AreEqual("One\nTwo\n", result);
         }
 
-        [Test()]
+        [okTest()]
         public void TestFactorialByReference()
         {
             var storyStr = @"
@@ -961,7 +961,7 @@ VAR result = 0
             Assert.AreEqual("120\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestFactorialRecursive()
         {
             var storyStr = @"
@@ -980,7 +980,7 @@ VAR result = 0
             Assert.AreEqual("120\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [xest()]
         public void TestFunctionCallRestrictions()
         {
             CompileStringWithoutRuntime(@"
@@ -1007,7 +1007,7 @@ This is a normal knot.
             Assert.IsTrue(_errorMessages[1].Contains("can only be called as a function"));
         }
 
-        [Test()]
+        [xTest()]
         public void TestFunctionPurityChecks()
         {
             CompileStringWithoutRuntime(@"
@@ -1040,7 +1040,7 @@ Hello world
             Assert.IsTrue(_errorMessages[6].Contains("Return statements can only be used in knots that"));
         }
 
-        [Test()]
+        [xTest()]
         public void TestDisallowEmptyDiverts()
         {
             CompileStringWithoutRuntime ("->", testingErrors: true);
@@ -1048,7 +1048,7 @@ Hello world
             Assert.IsTrue (HadError ("Empty diverts (->) are only valid on choices"));
         }
 
-        [Test()]
+        [okTest()]
         public void TestGatherChoiceSameLine()
         {
             var storyStr = "- * hello\n- * world";
@@ -1064,7 +1064,7 @@ Hello world
             Assert.AreEqual("world", story.currentChoices[0].text);
         }
 
-        [Test()]
+        [okTest()]
         public void TestGatherReadCountWithInitialSequence()
         {
             var story = CompileString(@"
@@ -1077,7 +1077,7 @@ Hello world
             Assert.AreEqual("seen test\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestHasReadOnChoice()
         {
             var storyStr =
@@ -1096,14 +1096,14 @@ Hello world
             Assert.AreEqual("visible choice", story.currentChoices[0].text);
         }
 
-        [Test()]
+        [okTest()]
         public void TestHelloWorld()
         {
             Story story = CompileString("Hello world");
             Assert.AreEqual("Hello world\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestIdentifersCanStartWithNumbers()
         {
             var story = CompileString(@"
@@ -1119,7 +1119,7 @@ Hello world
             Assert.AreEqual("512x2 = 1024\n512x2p2 = 1026\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestImplicitInlineGlue()
         {
             var story = CompileString(@"
@@ -1135,7 +1135,7 @@ five
             Assert.AreEqual("I have five eggs.\n", story.Continue());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestImplicitInlineGlueB ()
         {
             var story = CompileString (@"
@@ -1151,7 +1151,7 @@ X
             Assert.AreEqual ("A\nX\n", story.ContinueMaximally ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestImplicitInlineGlueC ()
         {
             var story = CompileString (@"
@@ -1168,7 +1168,7 @@ C
             Assert.AreEqual ("A\nC\n", story.ContinueMaximally ());
         }
 
-        [Test()]
+        [okTest()]
         public void TestInclude()
         {
             var storyStr =
@@ -1183,7 +1183,7 @@ This is the main file.
             Assert.AreEqual("This is include 1.\nThis is include 2.\nThis is the main file.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestIncrement()
         {
             Story story = CompileString(@"
@@ -1198,7 +1198,7 @@ VAR x = 5
             Assert.AreEqual("6\n5\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestKnotDotGather()
         {
             var story = CompileString(@"
@@ -1214,7 +1214,7 @@ VAR x = 5
         // Although VAR and CONST declarations are parsed as being
         // part of the knot, they're extracted, so that the null
         // termination detection shouldn't see this as a loose end.
-        [Test()]
+        [xTest()]
         public void TestKnotTerminationSkipsGlobalObjects()
         {
             CompileStringWithoutRuntime(@"
@@ -1229,7 +1229,7 @@ CONST Y = 2
         }
 
 
-        [Test ()]
+        [xTest ()]
         public void TestLooseEnds ()
         {
         	CompileStringWithoutRuntime (

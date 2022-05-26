@@ -135,14 +135,14 @@ class FloatValue extends Value<double> {
     }
 
     if (newType == ValueType.String) {
-      return StringValue(value.toStringAsFixed(7).trimRightEx({"0"}));
+      return StringValue(value.toStringAsFixed(7).trimRightEx({"0"}).trimRightEx({"."}));
     }
 
     throw badCastException(newType);
   }
 
   @override
-  String toString() => value.toStringAsFixed(7).trimRightEx({"0"});
+  String toString() => value.toStringAsFixed(7).trimRightEx({"0"}).trimRightEx({"."});
 
   @override
   bool get isTruthy => value != 0.0;

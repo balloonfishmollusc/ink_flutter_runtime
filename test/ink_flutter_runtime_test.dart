@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ink_flutter_runtime/addons/extra.dart';
 import 'package:ink_flutter_runtime/story.dart';
 import 'package:ink_flutter_runtime/error.dart';
 
@@ -1703,35 +1704,31 @@ VAR x = 5
 
     // Initial state
     expect("5\n", story.ContinueMaximally());
-    expect(5, story.variablesState?["x"]);
+    expect(5, story.variablesState!["x"]);
 
-    story.variablesState?["x"] = 10;
+    story.variablesState!["x"] = 10;
     story.ChooseChoiceIndex(0);
     expect("10\n", story.ContinueMaximally());
-    expect(10, story.variablesState?["x"]);
+    expect(10, story.variablesState!["x"]);
 
     story.variablesState?["x"] = 8.5;
     story.ChooseChoiceIndex(0);
-    expect("8" + "." + "5\n", story.ContinueMaximally());
-    expect(8.5, story.variablesState?["x"]);
+    expect("8.5\n", story.ContinueMaximally());
+    expect(8.5, story.variablesState!["x"]);
 
-    story.variablesState?["x"] = "a string";
+    story.variablesState!["x"] = "a string";
     story.ChooseChoiceIndex(0);
     expect("a string\n", story.ContinueMaximally());
     expect("a string", story.variablesState?["x"]);
 
-    expect(null, story.variablesState?["z"]);
+    expect(null, story.variablesState!["z"]);
 
-    // Not allowed arbitrary types
-    // Assert.Throws<Exception>(() =>
-    // {
     try {
-      story.variablesState?["x"] = '';
-    } on TypeError catch (e, s) {
-      print("Error:$e\nStack:$s");
+      story.variablesState!["x"] = StringBuilder();
+      throw Exception("Assert failed.");
+    } catch (e) {
+      if (!e.toString().startsWith("Exception: Invalid value passed")) rethrow;
     }
-
-    // });
   });
 
   test("", () {});

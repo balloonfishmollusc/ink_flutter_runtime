@@ -1265,7 +1265,7 @@ Loose end when there's no weave
             Assert.IsTrue (_authorMessages.Count == 1);
         }
 
-        [Test()]
+        [okTest()]
         public void TestKnotThreadInteraction()
         {
             Story story = CompileString(@"
@@ -1298,7 +1298,7 @@ Loose end when there's no weave
             Assert.AreEqual("THE END\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestKnotThreadInteraction2()
         {
             Story story = CompileString(@"
@@ -1328,7 +1328,7 @@ Loose end when there's no weave
             Assert.AreEqual("I’m an option\nFinishing thread.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestLeadingNewlineMultilineSequence()
         {
             var story = CompileString(@"
@@ -1342,7 +1342,7 @@ Loose end when there's no weave
             Assert.AreEqual("a line after an empty line\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestLiteralUnary()
         {
             var story = CompileString(@"
@@ -1357,7 +1357,7 @@ VAR negativeLiteral3 = !(0)
             Assert.AreEqual("-1\nfalse\ntrue\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestLogicInChoices()
         {
             var story = CompileString(@"
@@ -1376,7 +1376,7 @@ Joe
             Assert.AreEqual("'Hello Joe,' I said, knowing full well that his name was Joe.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestMultipleConstantReferences()
         {
             var story = CompileString(@"
@@ -1388,7 +1388,7 @@ VAR varStr = CONST_STR
             Assert.AreEqual("success\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestMultiThread()
         {
             Story story = CompileString(@"
@@ -1419,7 +1419,7 @@ This is place 2.
             Assert.AreEqual("choice in place 1\nThe end\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestNestedInclude()
         {
             var storyStr =
@@ -1435,7 +1435,7 @@ This is the main file
             Assert.AreEqual("The value of a variable in test file 2 is 5.\nThis is the main file\nThe value when accessed from knot_in_2 is 5.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestNestedPassByReference()
         {
             var storyStr = @"
@@ -1462,7 +1462,7 @@ VAR globalVal = 5
             Assert.AreEqual("5\n625\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestNonTextInChoiceInnerContent()
         {
             var storyStr =
@@ -1484,7 +1484,7 @@ VAR globalVal = 5
             Assert.AreEqual("option text. Conditional bit. Next.\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestOnceOnlyChoicesCanLinkBackToSelf()
         {
             var story = CompileString(@"
@@ -1515,7 +1515,7 @@ VAR globalVal = 5
             Assert.AreEqual(null, story.currentErrors);
         }
 
-        [Test()]
+        [okTest()]
         public void TestOnceOnlyChoicesWithOwnContent()
         {
             Story story = CompileString(@"
@@ -1557,7 +1557,7 @@ This is the {first|second|third} time.
             Assert.AreEqual(0, story.currentChoices.Count);
         }
 
-        [Test()]
+        [xTest()]
         public void TestPaths()
         {
             // Different instances should ensure different instances of individual components
@@ -1574,7 +1574,7 @@ This is the {first|second|third} time.
             Assert.AreNotEqual(path1, path3);
         }
 
-        [Test()]
+        [okTest()]
         public void TestPathToSelf()
         {
             var story = CompileString(@"
@@ -1598,7 +1598,7 @@ This is the {first|second|third} time.
             story.ChooseChoiceIndex(0);
         }
 
-        [Test()]
+        [okTest()]
         public void TestPrintNum()
         {
             var story = CompileString(@"
@@ -1670,7 +1670,7 @@ This is the {first|second|third} time.
 ".Replace("\r", ""), story.ContinueMaximally().Replace("\r", ""));
         }
 
-        [Test()]
+        [okTest()]
         public void TestQuoteCharacterSignificance()
         {
             // Confusing escaping + ink! Actual ink string is:
@@ -1682,7 +1682,7 @@ This is the {first|second|third} time.
             Assert.AreEqual("My name is \"Joe\"\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestReadCountAcrossCallstack()
         {
             var story = CompileString(@"
@@ -1701,7 +1701,7 @@ In second.
             Assert.AreEqual("1) Seen first 1 times.\nIn second.\n2) Seen first 1 times.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestReadCountAcrossThreads()
         {
             var story = CompileString(@"
@@ -1739,7 +1739,7 @@ hi
             Assert.AreEqual("hi\nhi\nhi\n3\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [xTest()]
         public void TestRequireVariableTargetsTyped()
         {
             CompileStringWithoutRuntime(@"
@@ -1755,7 +1755,7 @@ hi
             Assert.IsTrue(HadError("it should be marked as: ->"));
         }
 
-        [Test()]
+        [xTest()]
         public void TestReturnTextWarning()
         {
             InkParser parser = new InkParser("== test ==\n return something",
@@ -1771,7 +1771,7 @@ hi
             Assert.Throws<TestWarningException>(() => parser.Parse());
         }
 
-        [Test()]
+        [okTest()]
         public void TestSameLineDivertIsInline()
         {
             var story = CompileString(@"
@@ -1787,7 +1787,7 @@ as fast as we could.
             Assert.AreEqual("We hurried home to Savile Row as fast as we could.\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestShouldntGatherDueToChoice()
         {
             Story story = CompileString(@"
@@ -1804,7 +1804,7 @@ as fast as we could.
             Assert.AreEqual("opt\ntext\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestShuffleStackMuddying()
         {
             var story = CompileString (@"
@@ -1828,7 +1828,7 @@ as fast as we could.
             Assert.AreEqual (2, story.currentChoices.Count);
         }
 
-        [Test()]
+        [okTest()]
         public void TestSimpleGlue()
         {
             var storyStr = "Some <> \ncontent<> with glue.\n";
@@ -1838,7 +1838,7 @@ as fast as we could.
             Assert.AreEqual("Some content with glue.\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestStickyChoicesStaySticky()
         {
             var story = CompileString(@"
@@ -1859,7 +1859,7 @@ Second line.
             Assert.AreEqual(2, story.currentChoices.Count);
         }
 
-        [Test()]
+        [okTest()]
         public void TestStringConstants()
         {
             var story = CompileString(@"
@@ -1871,7 +1871,7 @@ CONST kX = ""hi""
             Assert.AreEqual("hi\n", story.Continue());
         }
 
-        [Test()]
+        [xTest()]
         public void TestStringParserA()
         {
             StringParser p = new StringParser("A");
@@ -1883,7 +1883,7 @@ CONST kX = ""hi""
             Assert.AreEqual(expected, results);
         }
 
-        [Test()]
+        [xTest()]
         public void TestStringParserABAB()
         {
             StringParser p = new StringParser("ABAB");
@@ -1895,7 +1895,7 @@ CONST kX = ""hi""
             Assert.AreEqual(expected, results);
         }
 
-        [Test()]
+        [Txest()]
         public void TestStringParserABAOptional()
         {
             StringParser p = new StringParser("ABAA");
@@ -1907,7 +1907,7 @@ CONST kX = ""hi""
             Assert.AreEqual(expected, results);
         }
 
-        [Test()]
+        [xTest()]
         public void TestStringParserABAOptional2()
         {
             StringParser p = new StringParser("BABB");
@@ -1919,7 +1919,7 @@ CONST kX = ""hi""
             Assert.AreEqual(expected, results);
         }
 
-        [Test()]
+        [xTest()]
         public void TestStringParserB()
         {
             StringParser p = new StringParser("B");
@@ -1930,7 +1930,7 @@ CONST kX = ""hi""
             Assert.IsNull(result);
         }
 
-        [Test()]
+        [okTest()]
         public void TestStringsInChoices()
         {
             var story = CompileString(@"
@@ -1946,7 +1946,7 @@ CONST kX = ""hi""
             Assert.AreEqual("test1 test4\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestStringTypeCoersion()
         {
             var story = CompileString(@"
@@ -1958,7 +1958,7 @@ CONST kX = ""hi""
             Assert.AreEqual("same\ndifferent\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestTemporariesAtGlobalScope()
         {
             var story = CompileString(@"
@@ -1969,7 +1969,7 @@ VAR x = 5
             Assert.AreEqual("54\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestThreadDone()
         {
             Story story = CompileString(@"
@@ -1987,7 +1987,7 @@ World.
             Assert.AreEqual("This is a thread example\nHello.\nThe example is now complete.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestTunnelOnwardsAfterTunnel()
         {
             var story = CompileString(@"
@@ -2007,7 +2007,7 @@ Hello...
             Assert.AreEqual("Hello...\n...world.\nThe End.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestTunnelVsThreadBehaviour()
         {
             Story story = CompileString(@"
@@ -2048,7 +2048,7 @@ Done.
             Assert.IsTrue(story.ContinueMaximally().Contains("Done."));
         }
 
-        [Test()]
+        [okTest()]
         public void TestTurnsSince()
         {
             Story story = CompileString(@"
@@ -2072,7 +2072,7 @@ Done.
             Assert.AreEqual("2\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestTurnsSinceNested()
         {
             var story = CompileString(@"
@@ -2098,7 +2098,7 @@ Done.
             Assert.AreEqual("more stuff\n1 = 1\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestTurnsSinceWithVariableTarget()
         {
             // Count all visits must be switched on for variable count targets
@@ -2123,7 +2123,7 @@ Done.
             Assert.AreEqual("1\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestUnbalancedWeaveIndentation()
         {
             var story = CompileString(@"
@@ -2147,7 +2147,7 @@ Done.
             Assert.AreEqual(0, story.currentChoices.Count);
         }
 
-        [Test()]
+        [okTest()]
         public void TestVariableDeclarationInConditional()
         {
             var storyStr =
@@ -2166,7 +2166,7 @@ VAR x = 0
             Assert.AreEqual("5\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestVariableDivertTarget()
         {
             var story = CompileString(@"
@@ -2184,7 +2184,7 @@ Here.
             Assert.AreEqual("Here.\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestVariableGetSetAPI()
         {
             var story = CompileString(@"

@@ -30,14 +30,16 @@ class Tests {
         Process.runSync("robocopy", ["./", "./cache", "*.ink"],
             workingDirectory: "test");
       } else {
-        Process.runSync("cp", ["*.ink", "cache/"], workingDirectory: "test");
+        Process.runSync("sh", ["-c", "cp test*.ink cache/"],
+            workingDirectory: "test");
       }
     }
 
     File("${cacheDir.path}/main.ink").writeAsStringSync(str);
 
     var processResult = Process.runSync(Platform.isWindows ? 'dotnet' : 'mono',
-        ["./inklecate.dll", "-j", "cache/main.ink"], workingDirectory: 'test');
+        ["./inklecate.dll", "-j", "cache/main.ink"],
+        workingDirectory: 'test');
 
     String shellOutput = processResult.stdout;
     if (!shellOutput.contains('{"compile-success": true}')) {
@@ -982,6 +984,757 @@ VAR x = 5
     expect("wigwag\n", story.Continue());
     expect("THE END\n", story.Continue());
   });
-  test("name", () {});
-  test("name", () {});
+  test("TestKnotThreadInteraction2", () {
+    Story story = tests.CompileString(r"""
+-> knot
+=== knot
+    <- threadA
+    When should this get printed?
+    -> DONE
+
+=== threadA
+    -> tunnel ->
+    Finishing thread.
+    -> DONE
+
+=== tunnel
+    -   I’m in a tunnel
+    *   I’m an option
+    -   ->->
+
+""");
+
+    expect("I’m in a tunnel\nWhen should this get printed?\n",
+        story.ContinueMaximally());
+    expect(1, story.currentChoices.length);
+    expect(story.currentChoices[0].text, "I’m an option");
+
+    story.ChooseChoiceIndex(0);
+    expect("I’m an option\nFinishing thread.\n", story.ContinueMaximally());
+  });
+
+  test("TestLeadingNewlineMultilineSequence", () {
+    var story = tests.CompileString(r"""
+{stopping:
+
+- a line after an empty line
+- blah
+}
+""");
+
+    expect("a line after an empty line\n", story.Continue());
+  });
+
+  test("TestLiteralUnary", () {
+    var story = tests.CompileString(r"""
+VAR negativeLiteral = -1
+VAR negativeLiteral2 = not not false
+VAR negativeLiteral3 = !(0)
+
+{negativeLiteral}
+{negativeLiteral2}
+{negativeLiteral3}
+""");
+    expect("-1\nfalse\ntrue\n", story.ContinueMaximally());
+  });
+
+  test("TestLogicInChoices", () {
+    var story = tests.CompileString(r"""
+* 'Hello {name()}[, your name is {name()}.'],' I said, knowing full well that his name was {name()}.
+-> DONE
+
+== function name ==
+Joe
+""");
+
+    story.ContinueMaximally();
+
+    expect("'Hello Joe, your name is Joe.'", story.currentChoices[0].text);
+    story.ChooseChoiceIndex(0);
+
+    expect("'Hello Joe,' I said, knowing full well that his name was Joe.\n",
+        story.ContinueMaximally());
+  });
+
+  test("TestMultipleConstantReferences", () {
+    var story = tests.CompileString(r"""
+CONST CONST_STR = "ConstantString"
+VAR varStr = CONST_STR
+{varStr == CONST_STR:success}
+""");
+
+    expect("success\n", story.Continue());
+  });
+
+  test("TestMultiThread", () {
+    Story story = tests.CompileString(r"""
+-> start
+== start ==
+-> tunnel ->
+The end
+-> END
+
+== tunnel ==
+<- place1
+<- place2
+-> DONE
+
+== place1 ==
+This is place 1.
+* choice in place 1
+- ->->
+
+== place2 ==
+This is place 2.
+* choice in place 2
+- ->->
+""");
+    expect("This is place 1.\nThis is place 2.\n", story.ContinueMaximally());
+
+    story.ChooseChoiceIndex(0);
+    expect("choice in place 1\nThe end\n", story.ContinueMaximally());
+  });
+
+  test("TestNestedInclude", () {
+    var storyStr = r"""
+INCLUDE test_included_file3.ink
+
+This is the main file
+
+-> knot_in_2
+                """;
+
+    Story story = tests.CompileString(storyStr, copyIncludes: true);
+    expect(
+        "The value of a variable in test file 2 is 5.\nThis is the main file\nThe value when accessed from knot_in_2 is 5.\n",
+        story.ContinueMaximally());
+  });
+
+  test("TestNestedPassByReference", () {
+    var storyStr = r"""
+VAR globalVal = 5
+
+{globalVal}
+
+~ squaresquare(globalVal)
+
+{globalVal}
+
+== function squaresquare(ref x) ==
+ {square(x)} {square(x)}
+ ~ return
+
+== function square(ref x) ==
+ ~ x = x * x
+ ~ return
+""";
+
+    Story story = tests.CompileString(storyStr);
+
+    // Bloody whitespace
+    expect("5\n625\n", story.ContinueMaximally());
+  });
+
+  test("TestNonTextInChoiceInnerConten", () {
+    var storyStr = r"""
+-> knot
+== knot
+   *   option text[]. {true: Conditional bit.} -> next
+   -> DONE
+
+== next
+    Next.
+    -> DONE
+                """;
+
+    Story story = tests.CompileString(storyStr);
+    story.Continue();
+
+    story.ChooseChoiceIndex(0);
+    expect("option text. Conditional bit. Next.\n", story.Continue());
+  });
+
+  test("TestOnceOnlyChoicesCanLinkBackToSelf", () {
+    var story = tests.CompileString(r"""
+-> opts
+= opts
+*   (firstOpt) [First choice]   ->  opts
+*   {firstOpt} [Second choice]  ->  opts
+* -> end
+
+- (end)
+    -> END
+""");
+
+    story.ContinueMaximally();
+
+    expect(1, story.currentChoices.length);
+    expect("First choice", story.currentChoices[0].text);
+
+    story.ChooseChoiceIndex(0);
+    story.ContinueMaximally();
+
+    expect(1, story.currentChoices.length);
+    expect("Second choice", story.currentChoices[0].text);
+
+    story.ChooseChoiceIndex(0);
+    story.ContinueMaximally();
+
+    expect([], story.currentErrors);
+  });
+
+  test("TestOnceOnlyChoicesWithOwnContent", () {
+    Story story = tests.CompileString(r"""
+VAR times = 3
+-> home
+
+== home ==
+~ times = times - 1
+{times >= 0:-> eat}
+I've finished eating now.
+-> END
+
+== eat ==
+This is the {first|second|third} time.
+ * Eat ice-cream[]
+ * Drink coke[]
+ * Munch cookies[]
+-
+-> home
+""");
+
+    story.ContinueMaximally();
+
+    expect(3, story.currentChoices.length);
+
+    story.ChooseChoiceIndex(0);
+    story.ContinueMaximally();
+
+    expect(2, story.currentChoices.length);
+
+    story.ChooseChoiceIndex(0);
+    story.ContinueMaximally();
+
+    expect(1, story.currentChoices.length);
+
+    story.ChooseChoiceIndex(0);
+    story.ContinueMaximally();
+
+    expect(0, story.currentChoices.length);
+  });
+
+  test("TestPathToSelf", () {
+    var story = tests.CompileString(r"""
+- (dododo)
+-> tunnel ->
+-> dododo
+
+== tunnel
++ A
+->->
+""");
+    // We're only checking that the story copes
+    // okay without crashing
+    // (internally the "-> dododo" ends up generating
+    //  a very short path: ".^", and after walking into
+    // the parent, it didn't cope with the "." before
+    // I fixed it!)
+    story.Continue();
+    story.ChooseChoiceIndex(0);
+    story.Continue();
+    story.ChooseChoiceIndex(0);
+  });
+
+  test("TestPrintNum", () {
+    var story = tests.CompileString(r"""
+. {print_num(4)} .
+. {print_num(15)} .
+. {print_num(37)} .
+. {print_num(101)} .
+. {print_num(222)} .
+. {print_num(1234)} .
+
+=== function print_num(x) ===
+{
+    - x >= 1000:
+        {print_num(x / 1000)} thousand { x mod 1000 > 0:{print_num(x mod 1000)}}
+    - x >= 100:
+        {print_num(x / 100)} hundred { x mod 100 > 0:and {print_num(x mod 100)}}
+    - x == 0:
+        zero
+    - else:
+        { x >= 20:
+            { x / 10:
+                - 2: twenty
+                - 3: thirty
+                - 4: forty
+                - 5: fifty
+                - 6: sixty
+                - 7: seventy
+                - 8: eighty
+                - 9: ninety
+            }
+            { x mod 10 > 0:<>-<>}
+        }
+        { x < 10 || x > 20:
+            { x mod 10:
+                - 1: one
+                - 2: two
+                - 3: three
+                - 4: four
+                - 5: five
+                - 6: six
+                - 7: seven
+                - 8: eight
+                - 9: nine
+            }
+        - else:
+            { x:
+                - 10: ten
+                - 11: eleven
+                - 12: twelve
+                - 13: thirteen
+                - 14: fourteen
+                - 15: fifteen
+                - 16: sixteen
+                - 17: seventeen
+                - 18: eighteen
+                - 19: nineteen
+            }
+        }
+}
+""");
+
+    expect(r""". four .
+. fifteen .
+. thirty-seven .
+. one hundred and one .
+. two hundred and twenty-two .
+. one thousand two hundred and thirty-four .
+""", story.ContinueMaximally());
+  });
+
+  test("TestQuoteCharacterSignificance", () {
+    // Confusing escaping + ink! Actual ink string is:
+    // My name is "{"J{"o"}e"}"
+    //  - First and last quotes are insignificant - they're part of the content
+    //  - Inner quotes are significant - they're part of the syntax for string expressions
+    // So output is: My name is "Joe"
+    var story = tests.CompileString(r'My name is "{"J{"o"}e"}"');
+    expect("My name is \"Joe\"\n", story.ContinueMaximally());
+  });
+
+  test("TestReadCountAcrossCallstack", () {
+    var story = tests.CompileString(r"""
+-> first
+
+== first ==
+1) Seen first {first} times.
+-> second ->
+2) Seen first {first} times.
+-> DONE
+
+== second ==
+In second.
+->->
+""");
+    expect("1) Seen first 1 times.\nIn second.\n2) Seen first 1 times.\n",
+        story.ContinueMaximally());
+  });
+
+  test("TestReadCountAcrossThreads", () {
+    var story = tests.CompileString(r"""
+    -> top
+
+= top
+    {top}
+    <- aside
+    {top}
+    -> DONE
+
+= aside
+    * {false} DONE
+	- -> DONE
+""");
+    expect("1\n1\n", story.ContinueMaximally());
+  });
+
+  test("TestSameLineDivertIsInline", () {
+    var story = tests.CompileString(r"""
+-> hurry_home
+=== hurry_home ===
+We hurried home to Savile Row -> as_fast_as_we_could
+
+=== as_fast_as_we_could ===
+as fast as we could.
+-> DONE
+""");
+
+    expect("We hurried home to Savile Row as fast as we could.\n",
+        story.Continue());
+  });
+
+  test("TestShouldntGatherDueToChoice", () {
+    Story story = tests.CompileString(r"""
+* opt
+    - - text
+    * * {false} impossible
+    * * -> END
+- gather""");
+
+    story.ContinueMaximally();
+    story.ChooseChoiceIndex(0);
+
+    // Shouldn't go to "gather"
+    expect("opt\ntext\n", story.ContinueMaximally());
+  });
+
+  test("TestShuffleStackMuddying", () {
+    var story = tests.CompileString(r"""
+* {condFunc()} [choice 1]
+* {condFunc()} [choice 2]
+* {condFunc()} [choice 3]
+* {condFunc()} [choice 4]
+
+
+=== function condFunc() ===
+{shuffle:
+    - ~ return false
+    - ~ return true
+    - ~ return true
+    - ~ return false
+}
+""");
+
+    story.Continue();
+
+    expect(2, story.currentChoices.length);
+  });
+
+  test("TestSimpleGlue", () {
+    var storyStr = "Some <> \ncontent<> with glue.\n";
+
+    Story story = tests.CompileString(storyStr);
+
+    expect("Some content with glue.\n", story.Continue());
+  });
+
+  test("TestStickyChoicesStaySticky", () {
+    var story = tests.CompileString(r"""
+-> test
+== test ==
+First line.
+Second line.
++ Choice 1
++ Choice 2
+- -> test
+""");
+
+    story.ContinueMaximally();
+    expect(2, story.currentChoices.length);
+
+    story.ChooseChoiceIndex(0);
+    story.ContinueMaximally();
+    expect(2, story.currentChoices.length);
+  });
+
+  test("TestStringConstants", () {
+    var story = tests.CompileString(r'''
+{x}
+VAR x = kX
+CONST kX = "hi"
+''');
+
+    expect("hi\n", story.Continue());
+  });
+
+  test("TestStringsInChoices", () {
+    var story = tests.CompileString(r'''
+* \ {"test1"} ["test2 {"test3"}""] {"test4"}
+-> DONE
+''');
+    story.ContinueMaximally();
+
+    expect(1, story.currentChoices.length);
+    expect(r'test1 "test2 test3"', story.currentChoices[0].text);
+
+    story.ChooseChoiceIndex(0);
+    expect("test1 test4\n", story.Continue());
+  });
+
+  test("TestStringTypeCoersion", () {
+    var story = tests.CompileString(r'''
+{"5" == 5:same|different}
+{"blah" == 5:same|different}
+''');
+
+    // Not sure that "5" should be equal to 5, but hmm.
+    expect("same\ndifferent\n", story.ContinueMaximally());
+  });
+
+  test("TestTemporariesAtGlobalScope", () {
+    var story = tests.CompileString(r'''
+VAR x = 5
+~ temp y = 4
+{x}{y}
+''');
+    expect("54\n", story.Continue());
+  });
+
+  test("TestThreadDone", () {
+    Story story = tests.CompileString(r'''
+This is a thread example
+<- example_thread
+The example is now complete.
+
+== example_thread ==
+Hello.
+-> DONE
+World.
+-> DONE
+''');
+
+    expect("This is a thread example\nHello.\nThe example is now complete.\n",
+        story.ContinueMaximally());
+  });
+
+  test("TestTunnelOnwardsAfterTunnel", () {
+    var story = tests.CompileString(r'''
+-> tunnel1 ->
+The End.
+-> END
+
+== tunnel1 ==
+Hello...
+-> tunnel2 ->->
+
+== tunnel2 ==
+...world.
+->->
+''');
+
+    expect("Hello...\n...world.\nThe End.\n", story.ContinueMaximally());
+  });
+
+  test("TestTunnelVsThreadBehaviour", () {
+    Story story = tests.CompileString(r'''
+-> knot_with_options ->
+Finished tunnel.
+
+Starting thread.
+<- thread_with_options
+* E
+-
+Done.
+
+== knot_with_options ==
+* A
+* B
+-
+->->
+
+== thread_with_options ==
+* C
+* D
+- -> DONE
+''');
+
+    expect(false, story.ContinueMaximally().contains("Finished tunnel"));
+
+    // Choices should be A, B
+    expect(2, story.currentChoices.length);
+
+    story.ChooseChoiceIndex(0);
+
+    // Choices should be C, D, E
+    expect(true, story.ContinueMaximally().contains("Finished tunnel"));
+    expect(3, story.currentChoices.length);
+
+    story.ChooseChoiceIndex(2);
+
+    expect(true, story.ContinueMaximally().contains("Done."));
+  });
+
+  test("TestTurnsSince", () {
+    Story story = tests.CompileString(r'''
+{ TURNS_SINCE(-> test) }
+~ test()
+{ TURNS_SINCE(-> test) }
+* [choice 1]
+- { TURNS_SINCE(-> test) }
+* [choice 2]
+- { TURNS_SINCE(-> test) }
+
+== function test ==
+~ return
+''');
+    expect("-1\n0\n", story.ContinueMaximally());
+
+    story.ChooseChoiceIndex(0);
+    expect("1\n", story.ContinueMaximally());
+
+    story.ChooseChoiceIndex(0);
+    expect("2\n", story.ContinueMaximally());
+  });
+
+  test("TestTurnsSinceNested", () {
+    var story = tests.CompileString(r'''
+-> empty_world
+=== empty_world ===
+    {TURNS_SINCE(-> then)} = -1
+    * (then) stuff
+        {TURNS_SINCE(-> then)} = 0
+        * * (next) more stuff
+            {TURNS_SINCE(-> then)} = 1
+        -> DONE
+''');
+    expect("-1 = -1\n", story.ContinueMaximally());
+
+    expect(1, story.currentChoices.length);
+    story.ChooseChoiceIndex(0);
+
+    expect("stuff\n0 = 0\n", story.ContinueMaximally());
+
+    expect(1, story.currentChoices.length);
+    story.ChooseChoiceIndex(0);
+
+    expect("more stuff\n1 = 1\n", story.ContinueMaximally());
+  });
+
+  test("TestTurnsSinceWithVariableTarget", () {
+    // Count all visits must be switched on for variable count targets
+    var story = tests.CompileString(r'''
+-> start
+
+=== start ===
+    {beats(-> start)}
+    {beats(-> start)}
+    *   [Choice]  -> next
+= next
+    {beats(-> start)}
+    -> END
+
+=== function beats(x) ===
+    ~ return TURNS_SINCE(x)
+''');
+
+    expect("0\n0\n", story.ContinueMaximally());
+
+    story.ChooseChoiceIndex(0);
+    expect("1\n", story.ContinueMaximally());
+  });
+
+  test("TestUnbalancedWeaveIndentation", () {
+    var story = tests.CompileString(r'''
+* * * First
+* * * * Very indented
+- - End
+-> END
+''');
+    story.ContinueMaximally();
+
+    expect(1, story.currentChoices.length);
+    expect("First", story.currentChoices[0].text);
+
+    story.ChooseChoiceIndex(0);
+    expect("First\n", story.ContinueMaximally());
+    expect(1, story.currentChoices.length);
+    expect("Very indented", story.currentChoices[0].text);
+
+    story.ChooseChoiceIndex(0);
+    expect("Very indented\nEnd\n", story.ContinueMaximally());
+    expect(0, story.currentChoices.length);
+  });
+
+  test("TestVariableDeclarationInConditional", () {
+    var storyStr = r'''
+VAR x = 0
+{true:
+    - ~ x = 5
+}
+{x}
+                ''';
+
+    Story story = tests.CompileString(storyStr);
+
+    // Extra newline is because there's a choice object sandwiched there,
+    // so it can't be absorbed :-/
+    expect("5\n", story.Continue());
+  });
+
+  test("TestVariableDivertTarget", () {
+    var story = tests.CompileString(r'''
+VAR x = -> here
+
+-> there
+
+== there ==
+-> x
+
+== here ==
+Here.
+-> DONE
+''');
+    expect("Here.\n", story.Continue());
+  });
+
+  test("TestVariableGetSetAPI", () {
+    var story = tests.CompileString(r'''
+VAR x = 5
+
+{x}
+
+* [choice]
+-
+{x}
+
+* [choice]
+-
+
+{x}
+
+* [choice]
+-
+
+{x}
+
+-> DONE
+''');
+
+    // Initial state
+    expect("5\n", story.ContinueMaximally());
+    expect(5, story.variablesState?["x"]);
+
+    story.variablesState?["x"] = 10;
+    story.ChooseChoiceIndex(0);
+    expect("10\n", story.ContinueMaximally());
+    expect(10, story.variablesState?["x"]);
+
+    story.variablesState?["x"] = 8.5;
+    story.ChooseChoiceIndex(0);
+    expect("8" + "." + "5\n", story.ContinueMaximally());
+    expect(8.5, story.variablesState?["x"]);
+
+    story.variablesState?["x"] = "a string";
+    story.ChooseChoiceIndex(0);
+    expect("a string\n", story.ContinueMaximally());
+    expect("a string", story.variablesState?["x"]);
+
+    expect(null, story.variablesState?["z"]);
+
+    // Not allowed arbitrary types
+    // Assert.Throws<Exception>(() =>
+    // {
+    try {
+      story.variablesState?["x"] = '';
+    } on TypeError catch (e, s) {
+      print("Error:$e\nStack:$s");
+    }
+
+    // });
+  });
+
+  test("", () {});
+
+  test("", () {});
 }

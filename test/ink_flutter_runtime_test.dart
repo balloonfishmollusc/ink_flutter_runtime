@@ -1731,6 +1731,169 @@ VAR x = 5
     }
   });
 
+  test("TestVariablePointerRefFromKnot", () {
+    var story = tests.CompileString(r'''
+VAR val = 5
+
+-> knot ->
+
+-> END
+
+== knot ==
+~ inc(val)
+{val}
+->->
+
+== function inc(ref x) ==
+    ~ x = x + 1
+''');
+
+    expect("6\n", story.Continue());
+  });
+
+  test("TestVariableSwapRecurse", () {
+    var storyStr = r'''
+~ f(1, 1)
+
+== function f(x, y) ==
+{ x == 1 and y == 1:
+  ~ x = 2
+  ~ f(y, x)
+- else:
+  {x} {y}
+}
+~ return
+''';
+
+    Story story = tests.CompileString(storyStr);
+
+    expect("1 2\n", story.ContinueMaximally());
+  });
+
+  test("TestVariableTunnel", () {
+    var story = tests.CompileString(r'''
+-> one_then_tother(-> tunnel)
+
+=== one_then_tother(-> x) ===
+    -> x -> end
+
+=== tunnel ===
+    STUFF
+    ->->
+
+=== end ===
+    -> END
+''');
+
+    expect("STUFF\n", story.ContinueMaximally());
+  });
+
+  test("TestWeaveGathers", () {
+    var storyStr = r'''
+-
+ * one
+    * * two
+   - - three
+ *  four
+   - - five
+- six
+                ''';
+
+    Story story = tests.CompileString(storyStr);
+
+    story.ContinueMaximally();
+
+    expect(2, story.currentChoices.length);
+    expect("one", story.currentChoices[0].text);
+    expect("four", story.currentChoices[1].text);
+
+    story.ChooseChoiceIndex(0);
+    story.ContinueMaximally();
+
+    expect(1, story.currentChoices.length);
+    expect("two", story.currentChoices[0].text);
+
+    story.ChooseChoiceIndex(0);
+    expect("two\nthree\nsix\n", story.ContinueMaximally());
+  });
+
+  test("TestWeaveOptions", () {
+    var storyStr = r'''
+                    -> test
+                    === test
+                        * Hello[.], world.
+                        -> END
+                ''';
+
+    Story story = tests.CompileString(storyStr);
+    story.Continue();
+
+    expect("Hello.", story.currentChoices[0].text);
+
+    story.ChooseChoiceIndex(0);
+    expect("Hello, world.\n", story.Continue());
+  });
+
+  test("TestWhitespace", () {
+    var storyStr = r'''
+-> firstKnot
+=== firstKnot
+    Hello!
+    -> anotherKnot
+
+=== anotherKnot
+    World.
+    -> END
+''';
+
+    Story story = tests.CompileString(storyStr);
+    expect("Hello!\nWorld.\n", story.ContinueMaximally());
+  });
+
+  test("TestVisitCountsWhenChoosing", () {
+    var storyStr = r'''
+== TestKnot ==
+this is a test
++ [Next] -> TestKnot2
+
+== TestKnot2 ==
+this is the end
+-> END
+''';
+
+    Story story = tests.CompileString(storyStr);
+
+    expect(story.state.VisitCountAtPathString("TestKnot"), 0);
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
+
+    story.ChoosePathString("TestKnot");
+
+    expect(story.state.VisitCountAtPathString("TestKnot"), 1);
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
+
+    story.Continue();
+
+    expect(story.state.VisitCountAtPathString("TestKnot"), 1);
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
+
+    story.ChooseChoiceIndex(0);
+
+    expect(story.state.VisitCountAtPathString("TestKnot"), 1);
+
+    // At this point, we have made the choice, but the divert *within* the choice
+    // won't yet have been evaluated.
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
+
+    story.Continue();
+
+    expect(story.state.VisitCountAtPathString("TestKnot"), 1);
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 1);
+  });
+
+  test("", () {});
+
+  test("", () {});
+
   test("", () {});
 
   test("", () {});

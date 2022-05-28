@@ -2237,7 +2237,7 @@ VAR x = 5
             });
         }
 
-        [Test()]
+        [xTest()]
         public void TestVariableObserver()
         {
             var story = CompileString(@"
@@ -2281,7 +2281,7 @@ Hello world 2!
             Assert.AreEqual(2, observerCallCount);
         }
 
-        [Test()]
+        [okTest()]
         public void TestVariablePointerRefFromKnot()
         {
             var story = CompileString(@"
@@ -2303,7 +2303,7 @@ VAR val = 5
             Assert.AreEqual("6\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestVariableSwapRecurse()
         {
             var storyStr = @"
@@ -2324,7 +2324,7 @@ VAR val = 5
             Assert.AreEqual("1 2\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestVariableTunnel()
         {
             var story = CompileString(@"
@@ -2344,7 +2344,7 @@ VAR val = 5
             Assert.AreEqual("STUFF\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestWeaveGathers()
         {
             var storyStr =
@@ -2376,7 +2376,7 @@ VAR val = 5
             Assert.AreEqual("two\nthree\nsix\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestWeaveOptions()
         {
             var storyStr =
@@ -2396,7 +2396,7 @@ VAR val = 5
             Assert.AreEqual("Hello, world.\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestWhitespace()
         {
             var storyStr =
@@ -2415,7 +2415,7 @@ VAR val = 5
             Assert.AreEqual("Hello!\nWorld.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestVisitCountsWhenChoosing()
         {
             var storyStr =

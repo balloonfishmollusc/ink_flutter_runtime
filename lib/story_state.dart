@@ -46,7 +46,7 @@ class StoryState {
         throw Exception("Content at path not found: " + pathString);
       }
 
-      visitCountOut = _patch?.visitCounts[container];
+      visitCountOut = _patch!.visitCounts[container];
       if (visitCountOut != null) return visitCountOut;
     }
 

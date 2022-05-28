@@ -16,7 +16,9 @@ class Tests {
   Tests(this._mode);
 
   Story CompileString(String str,
-      {bool testingErrors = false, bool copyIncludes = false}) {
+      {bool countAllVisits = false,
+      bool testingErrors = false,
+      bool copyIncludes = false}) {
     _testingErrors = testingErrors;
     _errorMessages.clear();
     _warningMessages.clear();
@@ -38,8 +40,11 @@ class Tests {
 
     File("${cacheDir.path}/main.ink").writeAsStringSync(str);
 
-    var processResult = Process.runSync(Platform.isWindows ? 'dotnet' : 'mono',
-        ["./inklecate.dll", "-j", "cache/main.ink"],
+    List<String> compileParams = ["./inklecate.dll", "-j", "cache/main.ink"];
+    if (countAllVisits) compileParams.insert(1, "-c");
+
+    var processResult = Process.runSync(
+        Platform.isWindows ? 'dotnet' : 'mono', compileParams,
         workingDirectory: 'test');
 
     String shellOutput = processResult.stdout;
@@ -1851,43 +1856,43 @@ VAR val = 5
   });
 
   test("TestVisitCountsWhenChoosing", () {
-//     var storyStr = r'''
-// == TestKnot ==
-// this is a test
-// + [Next] -> TestKnot2
+    var storyStr = r'''
+== TestKnot ==
+this is a test
++ [Next] -> TestKnot2
 
-// == TestKnot2 ==
-// this is the end
-// -> END
-// ''';
+== TestKnot2 ==
+this is the end
+-> END
+''';
 
-//     Story story = tests.CompileString(storyStr);
+    Story story = tests.CompileString(storyStr, countAllVisits: true);
 
-//     expect(story.state.VisitCountAtPathString("TestKnot"), 0);
-//     expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
+    expect(story.state.VisitCountAtPathString("TestKnot"), 0);
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
 
-//     story.ChoosePathString("TestKnot");
+    story.ChoosePathString("TestKnot");
 
-//     expect(story.state.VisitCountAtPathString("TestKnot"), 1);
-//     expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
+    expect(story.state.VisitCountAtPathString("TestKnot"), 1);
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
 
-//     story.Continue();
+    story.Continue();
 
-//     expect(story.state.VisitCountAtPathString("TestKnot"), 1);
-//     expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
+    expect(story.state.VisitCountAtPathString("TestKnot"), 1);
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
 
-//     story.ChooseChoiceIndex(0);
+    story.ChooseChoiceIndex(0);
 
-//     expect(story.state.VisitCountAtPathString("TestKnot"), 1);
+    expect(story.state.VisitCountAtPathString("TestKnot"), 1);
 
-//     // At this point, we have made the choice, but the divert *within* the choice
-//     // won't yet have been evaluated.
-//     expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
+    // At this point, we have made the choice, but the divert *within* the choice
+    // won't yet have been evaluated.
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 0);
 
-//     story.Continue();
+    story.Continue();
 
-//     expect(story.state.VisitCountAtPathString("TestKnot"), 1);
-//     expect(story.state.VisitCountAtPathString("TestKnot2"), 1);
+    expect(story.state.VisitCountAtPathString("TestKnot"), 1);
+    expect(story.state.VisitCountAtPathString("TestKnot2"), 1);
   });
 
   test("TestVisitCountBugDueToNestedContainers", () {
@@ -1905,13 +1910,9 @@ VAR val = 5
     expect("choice\n1\n", story.ContinueMaximally());
   });
 
-  test("test1", () {
-    expect(1,0)
-  });
+  test("test1", () {});
 
-  test("test2", () {
-    print(123);
-  });
+  test("test2", () {});
 
   test("", () {});
 }

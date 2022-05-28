@@ -2503,7 +2503,7 @@ this is the end
             Assert.AreEqual ("0\n", story.Continue ());
         }
 
-        [ok_Test()]
+        [okTest()]
         public void TestThreadInLogic()
         {
             var storyStr =

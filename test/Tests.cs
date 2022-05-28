@@ -2415,7 +2415,7 @@ VAR val = 5
             Assert.AreEqual("Hello!\nWorld.\n", story.ContinueMaximally());
         }
 
-        [okTest()]
+        [errorTest()]
         public void TestVisitCountsWhenChoosing()
         {
             var storyStr =

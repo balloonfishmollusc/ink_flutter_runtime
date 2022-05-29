@@ -1961,71 +1961,27 @@ this is the end
     expect(story.currentChoices.length, 0);
   });
 
-  test("", () {});
+  test("TestEvaluatingInkFunctionsFromGame", () {
+    var storyStr = r'''
+Top level content
+* choice
 
-  test("", () {});
+== somewhere ==
+= here
+-> DONE
 
-  test("", () {});
+== function test ==
+~ return -> somewhere.here
+''';
 
-  test("", () {});
+    Story story = tests.CompileString(storyStr);
+    story.Continue();
 
-  test("", () {});
+    var returnedDivertTarget = story.EvaluateFunction("test");
 
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
+    // Divert target should get returned as a string
+    expect("somewhere.here", returnedDivertTarget);
+  });
 
   test("", () {});
 

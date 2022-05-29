@@ -2551,7 +2551,7 @@ Content
         }
 
 
-        [Test ()]
+        [errorTest ()]
         public void TestEvaluatingInkFunctionsFromGame ()
         {
             var storyStr =

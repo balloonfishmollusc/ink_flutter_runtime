@@ -73,7 +73,7 @@ Nothing
 ");
         }
 
-        [Test()]
+        [okTest()]
         public void TestArithmetic()
         {
             Story story = CompileString(@"
@@ -89,7 +89,7 @@ Nothing
             Assert.AreEqual("36\n2\n3\n2\n2"+System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator+"3333333\n8\n8\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestBasicStringLiterals()
         {
             var story = CompileString(@"
@@ -100,7 +100,7 @@ Hello {""world""} 2.
             Assert.AreEqual("Hello world 1\nHello world 2.\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestBasicTunnel()
         {
             Story story = CompileString(@"
@@ -115,7 +115,7 @@ Hello
             Assert.AreEqual("Hello world\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestBlanksInInlineSequences()
         {
             var story = CompileString(@"
@@ -2459,7 +2459,7 @@ this is the end
         }
 
         // https://github.com/inkle/ink/issues/539
-        [Test()]
+        [okTest()]
         public void TestVisitCountBugDueToNestedContainers()
         {
             var storyStr = @"
@@ -2476,7 +2476,7 @@ this is the end
             Assert.AreEqual("choice\n1\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestTempGlobalConflict()
         {
             // Test bug where temp was being treated as a global
@@ -2525,7 +2525,7 @@ Content
             Assert.AreEqual ("Content\n", story.Continue ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestTempUsageInOptions ()
         {
             var storyStr =

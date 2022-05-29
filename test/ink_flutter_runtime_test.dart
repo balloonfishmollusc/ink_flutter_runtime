@@ -1910,9 +1910,119 @@ this is the end
     expect("choice\n1\n", story.ContinueMaximally());
   });
 
-  test("test1", () {});
+  test("TestTempGlobalConflict", () {
+    // Test bug where temp was being treated as a global
+    var storyStr = r'''
+-> outer
+=== outer
+~ temp x = 0
+~ f(x)
+{x}
+-> DONE
 
-  test("test2", () {});
+=== function f(ref x)
+~temp local = 0
+~x=x
+{setTo3(local)}
+
+=== function setTo3(ref x)
+~x = 3
+''';
+
+    Story story = tests.CompileString(storyStr);
+
+    expect("0\n", story.Continue());
+  });
+
+  test("TestTempUsageInOptions", () {
+    var storyStr = r'''
+~ temp one = 1
+* \ {one}
+- End of choice 
+    -> another
+* (another) this [is] another
+ -> DONE
+''';
+
+    Story story = tests.CompileString(storyStr);
+    story.Continue();
+
+    expect(1, story.currentChoices.length);
+    expect("1", story.currentChoices[0].text);
+    story.ChooseChoiceIndex(0);
+
+    expect("1\nEnd of choice\nthis another\n", story.ContinueMaximally());
+
+    expect(0, story.currentChoices.length);
+  });
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
 
   test("", () {});
 }

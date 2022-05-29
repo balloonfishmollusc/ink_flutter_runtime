@@ -1059,7 +1059,7 @@ class Story extends RuntimeObject {
   }
 
   dynamic EvaluateFunction(String functionName, [List? arguments]) {
-    var dict = EvaluateFunction(functionName, arguments);
+    var dict = EvaluateFunctionWithTextOutput(functionName, arguments);
     return dict['return_value'];
   }
 

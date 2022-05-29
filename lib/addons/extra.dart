@@ -22,43 +22,28 @@ extension StringEx on String {
     return trimEx({" ", "\t"});
   }
 
-  String trimRightEx(Set<String> charSet) {
-    if (length == 0) return "";
+  String trimRightEx(Set<String> charSet) =>
+      trimEx(charSet, left: false, right: true);
 
-    const int startPos = 0;
-    int endPos = length - 1;
-
-    while (startPos < endPos) {
-      if (charSet.contains(this[endPos])) {
-        endPos--;
-        continue;
-      }
-
-      break;
-    }
-    return substring(startPos, endPos + 1);
-  }
-
-  String trimEx(Set<String> charSet) {
-    if (length == 0) return "";
-
+  String trimEx(Set<String> charSet, {bool left = true, bool right = true}) {
     int startPos = 0;
-    int endPos = length - 1;
+    int endPos = length;
 
-    while (startPos < endPos) {
-      if (charSet.contains(this[startPos])) {
+    if (left) {
+      while (startPos < endPos) {
+        if (!charSet.contains(this[startPos])) break;
         startPos++;
-        continue;
       }
-
-      if (charSet.contains(this[endPos])) {
-        endPos--;
-        continue;
-      }
-
-      break;
     }
-    return substring(startPos, endPos + 1);
+
+    if (right) {
+      while (startPos < endPos) {
+        if (!charSet.contains(this[endPos - 1])) break;
+        endPos--;
+      }
+    }
+
+    return substring(startPos, endPos);
   }
 }
 

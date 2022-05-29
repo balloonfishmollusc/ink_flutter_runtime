@@ -2551,7 +2551,7 @@ Content
         }
 
 
-        [errorTest ()]
+        [okTest ()]
         public void TestEvaluatingInkFunctionsFromGame ()
         {
             var storyStr =
@@ -2576,7 +2576,7 @@ Top level content
             Assert.AreEqual ("somewhere.here", returnedDivertTarget);
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestEvaluatingInkFunctionsFromGame2 ()
         {
             var storyStr =
@@ -2620,7 +2620,7 @@ x = {x}, y = {y}
             Assert.AreEqual ("Three\n", story.Continue ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestEvaluatingFunctionVariableStateBug ()
         {
             var storyStr =
@@ -2660,7 +2660,7 @@ In tunnel.
             Assert.AreEqual ("End\n", story.Continue ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestDoneStopsThread ()
         {
             var storyStr =
@@ -2674,7 +2674,7 @@ This content is inaccessible.
             Assert.AreEqual (string.Empty, story.ContinueMaximally ());
         }
 
-        [Test ()]
+        [xTest ()]
         public void TestWrongVariableDivertTargetReference ()
         {
             var storyStr =
@@ -2696,7 +2696,7 @@ Should be able to get here!
             Assert.IsTrue (HadError ("it shouldn't be preceded by '->'"));
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestLeftRightGlueMatching ()
         {
             var storyStr =
@@ -2716,7 +2716,7 @@ A line.
             Assert.AreEqual ("A line.\nAnother line.\n", story.ContinueMaximally ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestSetNonExistantVariable ()
         {
             var storyStr =
@@ -2733,7 +2733,7 @@ Hello {x}.
             });
         }
 
-        [Test ()]
+        [xTest ()]
         public void TestConstRedefinition ()
         {
             var storyStr =
@@ -2764,7 +2764,7 @@ CONST z = -> elsewhere
             Assert.IsTrue (HadError ("'z' has been redefined"));
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestTags ()
         {
             var storyStr =
@@ -2815,7 +2815,7 @@ Stitch content
             Assert.AreEqual (knotTagWhenContinuedTwice, story.currentTags);
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestTunnelOnwardsDivertOverride ()
         {
             var storyStr =
@@ -2836,7 +2836,7 @@ Now in B.
             Assert.AreEqual ("This is A\nNow in B.\n", story.ContinueMaximally());
         }
 
-        [Test ()]
+        [xTest ()]
         public void TestEmptyThreadError ()
         {
             CompileStringWithoutRuntime ("<-", testingErrors:true);
@@ -2857,7 +2857,7 @@ TODO: b
             Assert.IsFalse (HadError ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestWeaveWithinSequence ()
         {
             var storyStr =
@@ -2880,7 +2880,7 @@ TODO: b
         }
 
 
-        [Test()]
+        [okTest()]
         public void TestNestedChoiceError()
         {
             var storyStr =

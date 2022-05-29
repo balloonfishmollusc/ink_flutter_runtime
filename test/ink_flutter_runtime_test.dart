@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ink_flutter_runtime/addons/extra.dart';
 import 'package:ink_flutter_runtime/story.dart';
 import 'package:ink_flutter_runtime/error.dart';
+import 'package:ink_flutter_runtime/story_exception.dart';
 
 enum TestMode { Normal, JsonRoundTrip }
 
@@ -1982,6 +1984,229 @@ Top level content
     // Divert target should get returned as a string
     expect("somewhere.here", returnedDivertTarget);
   });
+
+  test("TestEvaluatingInkFunctionsFromGame2", () {
+    var storyStr = r'''
+One
+Two
+Three
+
+== function func1 ==
+This is a function
+~ return 5
+
+== function func2 ==
+This is a function without a return value
+~ return
+
+== function add(x,y) ==
+x = {x}, y = {y}
+~ return x + y
+''';
+
+    Story story = tests.CompileString(storyStr);
+    String? textOutput;
+
+    textOutput = story.EvaluateFunctionWithTextOutput("func1")['text_output'];
+    var funcResult = story.EvaluateFunction("func1");
+
+    expect("This is a function\n", textOutput);
+    expect(5, funcResult);
+
+    expect("One\n", story.Continue());
+
+    textOutput = story.EvaluateFunctionWithTextOutput("func2")['text_output'];
+    funcResult = story.EvaluateFunction("func2");
+
+    expect("This is a function without a return value\n", textOutput);
+    expect(null, funcResult);
+
+    expect("Two\n", story.Continue());
+
+    textOutput =
+        story.EvaluateFunctionWithTextOutput("add", [1, 2])['text_output'];
+    funcResult = story.EvaluateFunction("add", [1, 2]);
+
+    expect("x = 1, y = 2\n", textOutput);
+    expect(3, funcResult);
+
+    expect("Three\n", story.Continue());
+  });
+
+  test("TestEvaluatingFunctionVariableStateBug", () {
+    var storyStr = r'''
+Start
+-> tunnel ->
+End
+-> END
+
+== tunnel ==
+In tunnel.
+->->
+
+=== function function_to_evaluate() ===
+    { zero_equals_(1):
+        ~ return "WRONG"
+    - else:
+        ~ return "RIGHT"
+    }
+
+=== function zero_equals_(k) ===
+    ~ do_nothing(0)
+    ~ return  (0 == k)
+
+=== function do_nothing(k)
+    ~ return 0
+''';
+
+    Story story = tests.CompileString(storyStr);
+
+    expect("Start\n", story.Continue());
+    expect("In tunnel.\n", story.Continue());
+
+    var funcResult = story.EvaluateFunction("function_to_evaluate");
+    expect("RIGHT", funcResult);
+
+    expect("End\n", story.Continue());
+  });
+
+  test("TestDoneStopsThread", () {
+    var storyStr = r'''
+-> DONE
+This content is inaccessible.
+''';
+
+    Story story = tests.CompileString(storyStr);
+
+    expect('', story.ContinueMaximally());
+  });
+
+  test("TestLeftRightGlueMatching", () {
+    var storyStr = r'''
+A line.
+{ f():
+    Another line.
+}
+
+== function f ==
+{false:nothing}
+~ return true
+
+''';
+    var story = tests.CompileString(storyStr);
+
+    expect("A line.\nAnother line.\n", story.ContinueMaximally());
+  });
+
+  test("TestSetNonExistantVariable", () {
+    var storyStr = r'''
+VAR x = "world"
+Hello {x}.
+''';
+    var story = tests.CompileString(storyStr);
+
+    expect("Hello world.\n", story.Continue());
+
+    try {
+      story.variablesState?["y"] = "earth";
+    } on StoryException {
+      print("is StoryException");
+    }
+    ;
+  });
+
+  test("TestTags", () {
+    var storyStr = r'''
+VAR x = 2 
+# author: Joe
+# title: My Great Story
+This is the content
+
+== knot ==
+# knot tag
+Knot content
+# end of knot tag
+-> END
+
+= stitch
+# stitch tag
+Stitch content
+# this tag is below some content so isn't included in the static tags for the stitch
+-> END
+''';
+    var story = tests.CompileString(storyStr);
+
+    List<String> globalTags = [];
+    globalTags.add("author: Joe");
+    globalTags.add("title: My Great Story");
+
+    List<String> knotTags = [];
+    knotTags.add("knot tag");
+
+    List<String> knotTagWhenContinuedTwice = [];
+    knotTagWhenContinuedTwice.add("end of knot tag");
+
+    List<String> stitchTags = [];
+    stitchTags.add("stitch tag");
+
+    expect(globalTags, story.globalTags);
+    expect("This is the content\n", story.Continue());
+    expect(globalTags, story.currentTags);
+
+    expect(knotTags, story.TagsForContentAtPath("knot"));
+    expect(stitchTags, story.TagsForContentAtPath("knot.stitch"));
+
+    story.ChoosePathString("knot");
+    expect("Knot content\n", story.Continue());
+    expect(knotTags, story.currentTags);
+    expect("", story.Continue());
+    expect(knotTagWhenContinuedTwice, story.currentTags);
+  });
+
+  test("TestTunnelOnwardsDivertOverride", () {
+    var storyStr = r'''
+-> A ->
+We will never return to here!
+
+== A ==
+This is A
+->-> B
+
+== B ==
+Now in B.
+-> END
+''';
+    var story = tests.CompileString(storyStr);
+
+    expect("This is A\nNow in B.\n", story.ContinueMaximally());
+  });
+
+  test("TestAuthorWarningsInsideContentListBug", () {
+    var storyStr = r'''
+{ once:
+- a
+TODO: b
+}
+''';
+    tests.CompileString(storyStr, testingErrors: true);
+    expect(tests.HadError(), false);
+  });
+
+  test("TestNestedChoiceError", () {
+    var storyStr = r'''
+{ true:
+    * choice
+}
+''';
+    tests.CompileString(storyStr, testingErrors: true);
+    expect(tests.HadError("need to explicitly divert"), false);
+  });
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
 
   test("", () {});
 

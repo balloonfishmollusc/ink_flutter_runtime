@@ -89,6 +89,7 @@ class Story extends RuntimeObject {
       throw Exception(
           "Version of ink used to build story is too old to be loaded by this version of the engine");
     } else if (formatFromFile != inkVersionCurrent) {
+      // ignore: avoid_print
       print(
           "WARNING: Version of ink used to build story doesn't match current version of engine. Non-critical, but recommend synchronising.");
     }
@@ -309,8 +310,6 @@ class Story extends RuntimeObject {
             _stateSnapshotAtLastNewline!.currentTags.length,
             state.currentTags.length);
 
-        //print("change: $change");
-
         if (change == OutputStateChange.ExtendedBeyondNewline ||
             _sawLookaheadUnsafeFunctionAfterNewline) {
           RestoreStateSnapshot();
@@ -466,8 +465,6 @@ class Story extends RuntimeObject {
   }
 
   void Step() {
-    //print(state.currentPointer.toString());
-
     bool shouldAddToStream = true;
 
     var pointer = state.currentPointer;

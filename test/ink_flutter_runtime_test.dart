@@ -18,7 +18,8 @@ class Tests {
   Story CompileString(String str,
       {bool countAllVisits = false,
       bool testingErrors = false,
-      bool copyIncludes = false}) {
+      bool copyIncludes = false,
+      bool printInkJson = false}) {
     _testingErrors = testingErrors;
     _errorMessages.clear();
     _warningMessages.clear();
@@ -53,6 +54,10 @@ class Tests {
     }
 
     String inkJson = File("${cacheDir.path}/main.ink.json").readAsStringSync();
+
+    // ignore: avoid_print
+    if (printInkJson) print(inkJson);
+
     Story story = Story(inkJson);
 
     story.onError.addListener(OnError);
@@ -72,7 +77,7 @@ class Tests {
   }
 
   bool HadErrorOrWarning(String? matchStr, List list) {
-    if (matchStr == null) return list.length > 0;
+    if (matchStr == null) return list.isNotEmpty;
 
     for (var str in list) {
       if (str.contains(matchStr)) return true;
@@ -1456,7 +1461,7 @@ CONST kX = "hi"
 
   test("TestStringsInChoices", () {
     var story = tests.CompileString(r'''
-* \ {"test1"} ["test2 {"test3"}""] {"test4"}
+* \ {"test1"} ["test2 {"test3"}"] {"test4"}
 -> DONE
 ''');
     story.ContinueMaximally();
@@ -1947,13 +1952,13 @@ this is the end
     Story story = tests.CompileString(storyStr);
     story.Continue();
 
-    expect(1, story.currentChoices.length);
-    expect("1", story.currentChoices[0].text);
+    expect(story.currentChoices.length, 1);
+    expect(story.currentChoices[0].text, "1");
     story.ChooseChoiceIndex(0);
 
-    expect("1\nEnd of choice\nthis another\n", story.ContinueMaximally());
+    expect(story.ContinueMaximally(), "1\nEnd of choice\nthis another\n");
 
-    expect(0, story.currentChoices.length);
+    expect(story.currentChoices.length, 0);
   });
 
   test("", () {});

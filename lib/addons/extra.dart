@@ -28,14 +28,15 @@ extension StringEx on String {
     const int startPos = 0;
     int endPos = length - 1;
 
-    while (startPos <= endPos) {
+    while (startPos < endPos) {
       if (charSet.contains(this[endPos])) {
         endPos--;
-      } else {
-        break;
+        continue;
       }
+
+      break;
     }
-    return substring(startPos, endPos - startPos + 1);
+    return substring(startPos, endPos + 1);
   }
 
   String trimEx(Set<String> charSet) {
@@ -44,7 +45,7 @@ extension StringEx on String {
     int startPos = 0;
     int endPos = length - 1;
 
-    while (startPos <= endPos) {
+    while (startPos < endPos) {
       if (charSet.contains(this[startPos])) {
         startPos++;
         continue;
@@ -57,7 +58,7 @@ extension StringEx on String {
 
       break;
     }
-    return substring(startPos, endPos - startPos + 1);
+    return substring(startPos, endPos + 1);
   }
 }
 

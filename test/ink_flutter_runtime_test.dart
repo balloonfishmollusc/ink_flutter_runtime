@@ -2198,8 +2198,12 @@ TODO: b
     * choice
 }
 ''';
-    tests.CompileString(storyStr, testingErrors: true);
-    expect(tests.HadError("need to explicitly divert"), false);
+    try {
+      tests.CompileString(storyStr, testingErrors: true);
+      throw Exception("Assert failed.");
+    } catch (e) {
+      expect(e.toString().contains("need to explicitly divert"), true);
+    }
   });
 
   test("", () {});

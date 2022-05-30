@@ -2209,7 +2209,7 @@ TODO: b
         "need to explicitly divert");
   });
 
-  test("skip_TestStitchNamingCollision", () {
+  test("TestStitchNamingCollision", () {
     var storyStr = r'''
 VAR stitch = 0
 
@@ -2281,7 +2281,7 @@ Unreachable
     expect("1\n2\n3\n", story.ContinueMaximally());
   });
 
-  test("TestVariousBlankChoiceWarning", () {
+  test("skip_TestVariousBlankChoiceWarning", () {
     var storyStr = r'''
 * [] blank
         ''';
@@ -2658,9 +2658,102 @@ text 2
     expect("1\n1\n2\n0.6666667\n0\n1\n", story.ContinueMaximally());
   });
 
-  test("", () {});
+  test("TestKnotStitchGatherCounts", () {
+    var storyStr = r'''
+VAR knotCount = 0
+VAR stitchCount = 0
 
-  test("", () {});
+-> gather_count_test ->
+
+~ knotCount = 0
+-> knot_count_test ->
+
+~ knotCount = 0
+-> knot_count_test ->
+
+-> stitch_count_test ->
+
+== gather_count_test ==
+VAR gatherCount = 0
+- (loop)
+~ gatherCount++
+{gatherCount} {loop}
+{gatherCount<3:->loop}
+->->
+
+== knot_count_test ==
+~ knotCount++
+{knotCount} {knot_count_test}
+{knotCount<3:->knot_count_test}
+->->
+
+
+== stitch_count_test ==
+~ stitchCount = 0
+-> stitch ->
+~ stitchCount = 0
+-> stitch ->
+->->
+
+= stitch
+~ stitchCount++
+{stitchCount} {stitch}
+{stitchCount<3:->stitch}
+->->
+''';
+
+    // Ensure it just compiles
+    var story = tests.CompileString(storyStr);
+
+    expect(r'''1 1
+2 2
+3 3
+1 1
+2 1
+3 1
+1 2
+2 2
+3 2
+1 1
+2 1
+3 1
+1 2
+2 2
+3 2
+''', story.ContinueMaximally());
+  });
+
+  test("TestChoiceThreadForking", () {
+    var storyStr = r'''
+-> generate_choice(1) ->
+
+== generate_choice(x) ==
+{true:
+    + A choice
+        Vaue of local var is: {x}
+        -> END
+}
+->->
+''';
+
+    // Generate the choice with the forked thread
+    var story = tests.CompileString(storyStr);
+    story.Continue();
+
+    // Save/reload
+    var savedState = story.state.ToJson();
+    story = tests.CompileString(storyStr);
+    story.state.LoadJson(savedState);
+
+    // Load the choice, it should have its own thread still
+    // that still has the captured temp x
+    story.ChooseChoiceIndex(0);
+    story.ContinueMaximally();
+
+    // Don't want this warning:
+    // RUNTIME WARNING: '' line 7: Variable not found: 'x'
+    expect(story.hasWarning, false);
+  });
 
   test("", () {});
 

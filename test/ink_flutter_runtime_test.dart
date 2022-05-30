@@ -2282,7 +2282,7 @@ Unreachable
     expect("1\n2\n3\n", story.ContinueMaximally());
   });
 
-  test("skip_TestVariousBlankChoiceWarning", () {
+  test("TestVariousBlankChoiceWarning", () {
     var storyStr = r'''
 * [] blank
         ''';

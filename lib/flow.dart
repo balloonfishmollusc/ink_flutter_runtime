@@ -22,7 +22,7 @@ class Flow {
     currentChoices =
         Json.JArrayToRuntimeObjList<Choice>(jObject["currentChoices"]);
 
-    Map<String, dynamic> jChoiceThreadsObj = jObject["choiceThreads"];
+    Map<String, dynamic>? jChoiceThreadsObj = jObject["choiceThreads"];
     LoadFlowChoiceThreads(jChoiceThreadsObj, story);
   }
 
@@ -59,7 +59,7 @@ class Flow {
   }
 
   // Used both to load old format and current
-  void LoadFlowChoiceThreads(Map<String, dynamic> jChoiceThreads, Story story) {
+  void LoadFlowChoiceThreads(Map<String, dynamic>? jChoiceThreads, Story story) {
     for (var choice in currentChoices) {
       var foundActiveThread =
           callStack.ThreadWithIndex(choice.originalThreadIndex);
@@ -67,7 +67,7 @@ class Flow {
         choice.threadAtGeneration = foundActiveThread.Copy();
       } else {
         Map<String, dynamic> jSavedChoiceThread =
-            jChoiceThreads[choice.originalThreadIndex.toString()];
+            jChoiceThreads![choice.originalThreadIndex.toString()];
         choice.threadAtGeneration =
             CallStackThread.new1(jSavedChoiceThread, story);
       }

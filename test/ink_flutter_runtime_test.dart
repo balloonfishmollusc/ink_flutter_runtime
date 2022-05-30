@@ -1158,7 +1158,7 @@ VAR globalVal = 5
     expect("5\n625\n", story.ContinueMaximally());
   });
 
-  test("TestNonTextInChoiceInnerConten", () {
+  test("TestNonTextInChoiceInnerContent", () {
     var storyStr = r"""
 -> knot
 == knot
@@ -2772,7 +2772,7 @@ VAR gatherCount = 0
     expect("Should be 1 not 0: 1.\n", story.Continue());
   });
 
-  test("TestCleanCallstackResetOnPathChoice(", () {
+  test("TestCleanCallstackResetOnPathChoice", () {
     var storyStr = r'''
 {RunAThing()}
 

@@ -3538,7 +3538,7 @@ VAR gatherCount = 0
         // Fix for threads being incorrectly reused between choices
         // and the main thread after save/reload
         // https://github.com/inkle/ink/issues/463
-        [Test()]
+        [okTest()]
         public void TestChoiceThreadForking()
         {
             var storyStr =
@@ -3574,7 +3574,7 @@ VAR gatherCount = 0
         }
 
 
-        [Test()]
+        [okTest()]
         public void TestFallbackChoiceOnThread()
         {
             var storyStr =
@@ -3598,7 +3598,7 @@ VAR gatherCount = 0
         // the call to {RunAThing()}.
         // This was when we unwound the callstack, but we didn't reset
         // the base element.
-        [Test()]
+        [okTest()]
         public void TestCleanCallstackResetOnPathChoice()
         {
             var storyStr =
@@ -3658,7 +3658,7 @@ Text.
         // a simple bool flag to a counter. Therefore we
         // get the slightly nausia-inducing "true + 1 == 2",
         // "1 == true", etc. It's for the best though, I promise!
-        [Test()]
+        [okTest()]
         public void TestBools()
         {
             Assert.AreEqual("true\n", CompileString("{true}").Continue());
@@ -3673,7 +3673,7 @@ Text.
         }
 
 
-        [Test()]
+        [okTest()]
         public void TestMultiFlowBasics()
         {
             var storyStr =

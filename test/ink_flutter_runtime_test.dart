@@ -2757,17 +2757,193 @@ VAR gatherCount = 0
     expect(story.hasWarning, false);
   });
 
-  test("", () {});
+  test("TestFallbackChoiceOnThread", () {
+    var storyStr = r'''
+<- knot
 
-  test("", () {});
+== knot
+   ~ temp x = 1
+   *   ->
+       Should be 1 not 0: {x}.
+       -> DONE
+''';
 
-  test("", () {});
+    var story = tests.CompileString(storyStr);
+    expect("Should be 1 not 0: 1.\n", story.Continue());
+  });
 
-  test("", () {});
+  test("TestCleanCallstackResetOnPathChoice(", () {
+    var storyStr = r'''
+{RunAThing()}
 
-  test("", () {});
+== function RunAThing ==
+The first line.
+The second line.
 
-  test("", () {});
+== SomewhereElse ==
+{"somewhere else"}
+->END
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    expect("The first line.\n", story.Continue());
+
+    story.ChoosePathString("SomewhereElse");
+
+    expect("somewhere else\n", story.ContinueMaximally());
+  });
+
+  test("estStateRollbackOverDefaultChoice", () {
+    var storyStr = r'''
+<- make_default_choice
+Text.
+
+=== make_default_choice
+    *   -> 
+        {5}
+        -> END 
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    expect("Text.\n", story.Continue());
+    expect("5\n", story.Continue());
+  });
+
+  test("TestBools", () {
+    expect("true\n", tests.CompileString("{true}").Continue());
+    expect("2\n", tests.CompileString("{true + 1}").Continue());
+    expect("3\n", tests.CompileString("{2 + true}").Continue());
+    expect("0\n", tests.CompileString("{false + false}").Continue());
+    expect("2\n", tests.CompileString("{true + true}").Continue());
+    expect("true\n", tests.CompileString("{true == 1}").Continue());
+    expect("false\n", tests.CompileString("{not 1}").Continue());
+    expect("false\n", tests.CompileString("{not true}").Continue());
+    expect("true\n", tests.CompileString("{3 > 1}").Continue());
+  });
+
+  test("TestMultiFlowBasics", () {
+    var storyStr = r'''
+=== knot1
+knot 1 line 1
+knot 1 line 2
+-> END 
+
+=== knot2
+knot 2 line 1
+knot 2 line 2
+-> END 
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    story.SwitchFlow("First");
+    story.ChoosePathString("knot1");
+    expect("knot 1 line 1\n", story.Continue());
+
+    story.SwitchFlow("Second");
+    story.ChoosePathString("knot2");
+    expect("knot 2 line 1\n", story.Continue());
+
+    story.SwitchFlow("First");
+    expect("knot 1 line 2\n", story.Continue());
+
+    story.SwitchFlow("Second");
+    expect("knot 2 line 2\n", story.Continue());
+  });
+
+  test("TestMultiFlowSaveLoadThreads", () {
+    var storyStr = r'''
+Default line 1
+Default line 2
+
+== red ==
+Hello I'm red
+<- thread1("red")
+<- thread2("red")
+-> DONE
+
+== blue ==
+Hello I'm blue
+<- thread1("blue")
+<- thread2("blue")
+-> DONE
+
+== thread1(name) ==
++ Thread 1 {name} choice
+    -> thread1Choice(name)
+
+== thread2(name) ==
++ Thread 2 {name} choice
+    -> thread2Choice(name)
+
+== thread1Choice(name) ==
+After thread 1 choice ({name})
+-> END
+
+== thread2Choice(name) ==
+After thread 2 choice ({name})
+-> END
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    // Default flow
+    expect("Default line 1\n", story.Continue());
+
+    story.SwitchFlow("Blue Flow");
+    story.ChoosePathString("blue");
+    expect("Hello I'm blue\n", story.Continue());
+
+    story.SwitchFlow("Red Flow");
+    story.ChoosePathString("red");
+    expect("Hello I'm red\n", story.Continue());
+
+    // Test existing state remains after switch (blue)
+    story.SwitchFlow("Blue Flow");
+    expect("Hello I'm blue\n", story.currentText);
+    expect("Thread 1 blue choice", story.currentChoices[0].text);
+
+    // Test existing state remains after switch (red)
+    story.SwitchFlow("Red Flow");
+    expect("Hello I'm red\n", story.currentText);
+    expect("Thread 1 red choice", story.currentChoices[0].text);
+
+    // Save/load test
+    var saved = story.state.ToJson();
+
+    // Test choice before reloading state before resetting
+    story.ChooseChoiceIndex(0);
+    expect("Thread 1 red choice\nAfter thread 1 choice (red)\n",
+        story.ContinueMaximally());
+    story.ResetState();
+
+    // Load to pre-choice: still red, choose second choice
+    story.state.LoadJson(saved);
+
+    story.ChooseChoiceIndex(1);
+    expect("Thread 2 red choice\nAfter thread 2 choice (red)\n",
+        story.ContinueMaximally());
+
+    // Load: switch to blue, choose 1
+    story.state.LoadJson(saved);
+    story.SwitchFlow("Blue Flow");
+    story.ChooseChoiceIndex(0);
+    expect("Thread 1 blue choice\nAfter thread 1 choice (blue)\n",
+        story.ContinueMaximally());
+
+    // Load: switch to blue, choose 2
+    story.state.LoadJson(saved);
+    story.SwitchFlow("Blue Flow");
+    story.ChooseChoiceIndex(1);
+    expect("Thread 2 blue choice\nAfter thread 2 choice (blue)\n",
+        story.ContinueMaximally());
+
+    // Remove active blue flow, should revert back to global flow
+    story.RemoveFlow("Blue Flow");
+    expect("Default line 2\n", story.Continue());
+  });
 
   test("", () {});
 

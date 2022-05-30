@@ -22,10 +22,8 @@ class Flow {
     currentChoices =
         Json.JArrayToRuntimeObjList<Choice>(jObject["currentChoices"]);
 
-    Map jChoiceThreadsObj = jObject["choiceThreads"];
-    // jObject["choiceThreads"] may be a Map<int, dynamic>
-    // we use .cast() to ensure it works
-    LoadFlowChoiceThreads(jChoiceThreadsObj.cast(), story);
+    Map<String, dynamic> jChoiceThreadsObj = jObject["choiceThreads"];
+    LoadFlowChoiceThreads(jChoiceThreadsObj, story);
   }
 
   dynamic WriteJson() {
@@ -41,10 +39,10 @@ class Flow {
       if (callStack.ThreadWithIndex(c.originalThreadIndex) == null) {
         if (!hasChoiceThreads) {
           hasChoiceThreads = true;
-          dict["choiceThreads"] = <int, dynamic>{};
+          dict["choiceThreads"] = <String, dynamic>{};
         }
 
-        dict["choiceThreads"][c.originalThreadIndex] =
+        dict["choiceThreads"][c.originalThreadIndex.toString()] =
             c.threadAtGeneration!.WriteJson();
       }
     }

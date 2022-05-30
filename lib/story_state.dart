@@ -531,8 +531,8 @@ class StoryState {
       divertedPointer = story.PointerAtPath(divertPath);
     }
 
-    _visitCounts = jObject["visitCounts"].cast();
-    _turnIndices = jObject["turnIndices"].cast();
+    _visitCounts = jObject["visitCounts"];
+    _turnIndices = jObject["turnIndices"];
 
     currentTurnIndex = jObject["turnIdx"];
     storySeed = jObject["storySeed"];

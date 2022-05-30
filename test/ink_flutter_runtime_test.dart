@@ -79,15 +79,14 @@ class Tests {
   }
 
   bool HadErrorOrWarning(String? matchStr, List list) {
-    if (matchStr == null) return list.isNotEmpty;
-
+    if (matchStr == null) return list.length > 0;
     for (var str in list) {
       if (str.contains(matchStr)) return true;
     }
     return false;
   }
 
-  bool HadWarning([String? matchStr]) {
+  bool HadWarning([String? matchStr = null]) {
     return HadErrorOrWarning(matchStr, _warningMessages);
   }
 
@@ -2205,6 +2204,136 @@ TODO: b
       expect(e.toString().contains("need to explicitly divert"), true);
     }
   });
+
+  test("skip_TestStitchNamingCollision", () {
+    var storyStr = r'''
+VAR stitch = 0
+
+== knot ==
+= stitch
+->DONE
+''';
+    tests.CompileString(storyStr, countAllVisits: false, testingErrors: true);
+
+    expect(tests.HadError("already been used for a var"), true);
+  });
+
+  test("skip_TestWeavePointNamingCollision", () {
+    var storyStr = r'''
+-(opts)
+opts1
+-(opts)
+opts1
+-> END
+''';
+    tests.CompileString(storyStr, countAllVisits: false, testingErrors: true);
+
+    expect(tests.HadError("with the same label"), true);
+  });
+
+  test("skip_TestVariableNamingCollisionWithArg", () {
+    var storyStr = r'''=== function knot (a)
+                    ~temp a = 1''';
+
+    tests.CompileString(storyStr, countAllVisits: false, testingErrors: true);
+
+    expect(tests.HadError("has already been used"), true);
+  });
+
+  test("TestTunnelOnwardsDivertAfterWithArg", () {
+    var storyStr = r'''
+-> a ->  
+
+=== a === 
+->-> b (5 + 3)
+
+=== b (x) ===
+{x} 
+-> END
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    expect("8\n", story.ContinueMaximally());
+  });
+
+  test("TestVariousDefaultChoices", () {
+    var storyStr = r'''
+* -> hello
+Unreachable
+- (hello) 1
+* ->
+   - - 2
+- 3
+-> END
+''';
+
+    var story = tests.CompileString(storyStr);
+    expect("1\n2\n3\n", story.ContinueMaximally());
+  });
+
+  test("TestVariousBlankChoiceWarning", () {
+    var storyStr = r'''
+* [] blank
+        ''';
+
+    tests.CompileString(storyStr, testingErrors: true);
+    expect(tests.HadWarning("Blank choice"), true);
+  });
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
+
+  test("", () {});
 
   test("", () {});
 

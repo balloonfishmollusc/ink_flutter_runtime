@@ -2894,7 +2894,7 @@ TODO: b
         }
 
 
-        [Test ()]
+        [errorTest ()]
         public void TestStitchNamingCollision ()
         {
             var storyStr =
@@ -2911,7 +2911,7 @@ VAR stitch = 0
         }
 
 
-        [Test ()]
+        [errorTest ()]
         public void TestWeavePointNamingCollision ()
         {
             var storyStr =
@@ -2927,7 +2927,7 @@ opts1
             Assert.IsTrue(HadError ("with the same label"));
         }
 
-        [Test ()]
+        [errorTest ()]
         public void TestVariableNamingCollisionWithArg ()
         {
             var storyStr =
@@ -2939,7 +2939,7 @@ opts1
             Assert.IsTrue (HadError ("has already been used"));
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestTunnelOnwardsDivertAfterWithArg ()
         {
             var storyStr =
@@ -2959,7 +2959,7 @@ opts1
             Assert.AreEqual ("8\n", story.ContinueMaximally ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestVariousDefaultChoices ()
         {
             var storyStr =

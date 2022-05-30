@@ -3449,7 +3449,7 @@ text 2
         }
 
         // Fix for rogue "can't use as sub-expression" bug
-        [errorTest()]
+        [xTest()]
         public void TestUsingFunctionAndIncrementTogether()
         {
             var storyStr =
@@ -3466,7 +3466,7 @@ VAR x = 5
         }
 
         // Fix for rogue "can't use as sub-expression" bug
-        [Test()]
+        [okTest()]
         public void TestKnotStitchGatherCounts()
         {
             var storyStr =

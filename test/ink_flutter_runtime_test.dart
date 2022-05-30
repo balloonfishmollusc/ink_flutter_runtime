@@ -1382,6 +1382,23 @@ In second.
     expect("1\n1\n", story.ContinueMaximally());
   });
 
+  test("TestReadCountDotSeparatedPath", () {
+    Story story = tests.CompileString(r'''
+-> hi ->
+-> hi ->
+-> hi ->
+
+{ hi.stitch_to_count }
+
+== hi ==
+= stitch_to_count
+hi
+->->
+''');
+
+    expect("hi\nhi\nhi\n3\n", story.ContinueMaximally());
+  });
+
   test("TestSameLineDivertIsInline", () {
     var story = tests.CompileString(r"""
 -> hurry_home
@@ -1951,6 +1968,25 @@ this is the end
     expect("0\n", story.Continue());
   });
 
+  test("TestThreadInLogic", () {
+    var storyStr = r'''
+-> once ->
+-> once ->
+
+== once ==
+{<- content|}
+->->
+
+== content ==
+Content
+-> DONE
+''';
+
+    Story story = tests.CompileString(storyStr);
+
+    expect("Content\n", story.Continue());
+  });
+
   test("TestTempUsageInOptions", () {
     var storyStr = r'''
 ~ temp one = 1
@@ -2197,6 +2233,25 @@ TODO: b
 ''';
     tests.CompileString(storyStr, testingErrors: true);
     expect(tests.HadError(), false);
+  });
+
+  test("TestWeaveWithinSequence", () {
+    var storyStr = r'''
+{ shuffle:
+-   * choice
+    nextline
+    -> END
+}
+''';
+    var story = tests.CompileString(storyStr);
+
+    story.Continue();
+
+    expect(story.currentChoices.length == 1, true);
+
+    story.ChooseChoiceIndex(0);
+
+    expect("choice\nnextline\n", story.ContinueMaximally());
   });
 
   test("TestNestedChoiceError", () {

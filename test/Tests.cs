@@ -766,7 +766,7 @@ world
             Assert.AreEqual("hello\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestEnd2()
         {
             Story story = CompileString(@"
@@ -1720,7 +1720,7 @@ In second.
             Assert.AreEqual("1\n1\n", story.ContinueMaximally());
         }
 
-        [Test()]
+        [okTest()]
         public void TestReadCountDotSeparatedPath()
         {
             Story story = CompileString(@"
@@ -3630,7 +3630,7 @@ The second line.
         // at the time, causing an error.
         // Fixed by re-forking the choice thread
         // in TryFollowDefaultInvisibleChoice
-        [Test()]
+        [okTest()]
         public void TestStateRollbackOverDefaultChoice()
         {
             var storyStr =
@@ -3706,7 +3706,7 @@ knot 2 line 2
             Assert.AreEqual("knot 2 line 2\n", story.Continue());
         }
 
-        [Test()]
+        [okTest()]
         public void TestMultiFlowSaveLoadThreads()
         {
             var storyStr =
@@ -3910,7 +3910,7 @@ After thread 2 choice ({name})
         }
 
 
-        [Test()]
+        [xTest()]
         public void TestCharacterRangeIdentifiersForConstNamesWithAsciiPrefix()
         {
             var ranges = InkParser.ListAllCharacterRanges();
@@ -3932,7 +3932,7 @@ CONST b{0} = 3
                 Assert.IsNotNull(compiledStory);
             }
         }
-        [Test()]
+        [xTest()]
         public void TestCharacterRangeIdentifiersForConstNamesWithAsciiSuffix()
         {
             var ranges = InkParser.ListAllCharacterRanges();
@@ -3955,7 +3955,7 @@ CONST {0}b = 3
             }
         }
 
-        [Test()]
+        [xTest()]
         public void TestCharacterRangeIdentifiersForSimpleVariableNamesWithAsciiPrefix()
         {
             var ranges = InkParser.ListAllCharacterRanges();
@@ -3978,7 +3978,7 @@ VAR b{0} = 3
             }
         }
 
-        [Test()]
+        [xTest()]
         public void TestCharacterRangeIdentifiersForSimpleVariableNamesWithAsciiSuffix()
         {
             var ranges = InkParser.ListAllCharacterRanges();
@@ -4002,7 +4002,7 @@ VAR {0}b = 3
         }
 
 
-        [Test ()]
+        [xTest ()]
         public void TestCharacterRangeIdentifiersForDivertNamesWithAsciiPrefix()
         {
             var ranges = InkParser.ListAllCharacterRanges();
@@ -4024,7 +4024,7 @@ VAR z{0} = -> divert{0}
                 Assert.IsNotNull (compiledStory);
             }
         }
-        [Test()]
+        [xTest()]
         public void TestCharacterRangeIdentifiersForDivertNamesWithAsciiSuffix()
         {
             var ranges = InkParser.ListAllCharacterRanges();

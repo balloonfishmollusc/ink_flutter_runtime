@@ -2794,7 +2794,7 @@ The second line.
     expect("somewhere else\n", story.ContinueMaximally());
   });
 
-  test("estStateRollbackOverDefaultChoice", () {
+  test("TestStateRollbackOverDefaultChoice", () {
     var storyStr = r'''
 <- make_default_choice
 Text.
@@ -2944,16 +2944,4 @@ After thread 2 choice ({name})
     story.RemoveFlow("Blue Flow");
     expect("Default line 2\n", story.Continue());
   });
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
-
-  test("", () {});
 }

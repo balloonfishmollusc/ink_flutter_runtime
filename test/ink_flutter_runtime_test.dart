@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ink_flutter_runtime/addons/extra.dart';
@@ -75,9 +74,12 @@ class Tests {
 
     story.onError.addListener(OnError);
 
+    //print(inkJson);
+
     // Convert to json and back again
     if (_mode == TestMode.JsonRoundTrip) {
       var jsonStr = story.ToJson();
+      //print(jsonStr);
       story = Story(jsonStr);
       story.onError.addListener(OnError);
     }

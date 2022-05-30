@@ -152,6 +152,7 @@ class RuntimeObject {
     }
 
     if (relativePathStr.length < globalPathStr.length) {
+      if (relativePathStr[0] != '.') relativePathStr = '.' + relativePathStr;
       return relativePathStr;
     } else {
       return globalPathStr;

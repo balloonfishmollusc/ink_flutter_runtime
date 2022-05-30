@@ -2843,7 +2843,7 @@ Now in B.
             Assert.IsTrue (HadError ("Expected target for new thread"));
         }
 
-        [Test ()]
+        [xTest()]
         public void TestAuthorWarningsInsideContentListBug ()
         {
             var storyStr =

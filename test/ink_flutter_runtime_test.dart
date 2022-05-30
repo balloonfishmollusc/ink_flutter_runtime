@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ink_flutter_runtime/addons/extra.dart';
 import 'package:ink_flutter_runtime/story.dart';
@@ -8,6 +6,17 @@ import 'package:ink_flutter_runtime/error.dart';
 import 'package:ink_flutter_runtime/story_exception.dart';
 
 enum TestMode { Normal, JsonRoundTrip }
+
+void assertError<E extends Exception>(Function fn, [String? msg]) {
+  try {
+    fn();
+    assert(false);
+  } on E catch (e) {
+    if (msg != null) {
+      expect(e.toString().contains(msg), true);
+    }
+  }
+}
 
 class Tests {
   final TestMode _mode;
@@ -80,14 +89,14 @@ class Tests {
   }
 
   bool HadErrorOrWarning(String? matchStr, List list) {
-    if (matchStr == null) return list.length > 0;
+    if (matchStr == null) return list.isNotEmpty;
     for (var str in list) {
       if (str.contains(matchStr)) return true;
     }
     return false;
   }
 
-  bool HadWarning([String? matchStr = null]) {
+  bool HadWarning([String? matchStr]) {
     return HadErrorOrWarning(matchStr, _warningMessages);
   }
 
@@ -2107,12 +2116,9 @@ Hello {x}.
 
     expect("Hello world.\n", story.Continue());
 
-    try {
+    assertError<StoryException>(() {
       story.variablesState?["y"] = "earth";
-    } on StoryException {
-      print("is StoryException");
-    }
-    ;
+    });
   });
 
   test("TestTags", () {
@@ -2198,12 +2204,9 @@ TODO: b
     * choice
 }
 ''';
-    try {
-      tests.CompileString(storyStr, testingErrors: true);
-      throw Exception("Assert failed.");
-    } catch (e) {
-      expect(e.toString().contains("need to explicitly divert"), true);
-    }
+
+    assertError(() => tests.CompileString(storyStr, testingErrors: true),
+        "need to explicitly divert");
   });
 
   test("skip_TestStitchNamingCollision", () {
@@ -2214,12 +2217,14 @@ VAR stitch = 0
 = stitch
 ->DONE
 ''';
-    tests.CompileString(storyStr, countAllVisits: false, testingErrors: true);
 
-    expect(tests.HadError("already been used for a var"), true);
+    assertError(
+        () => tests.CompileString(storyStr,
+            countAllVisits: false, testingErrors: true),
+        "already been used for a var");
   });
 
-  test("skip_TestWeavePointNamingCollision", () {
+  test("TestWeavePointNamingCollision", () {
     var storyStr = r'''
 -(opts)
 opts1
@@ -2227,18 +2232,21 @@ opts1
 opts1
 -> END
 ''';
-    tests.CompileString(storyStr, countAllVisits: false, testingErrors: true);
 
-    expect(tests.HadError("with the same label"), true);
+    assertError(
+        () => tests.CompileString(storyStr,
+            countAllVisits: false, testingErrors: true),
+        "with the same label");
   });
 
-  test("skip_TestVariableNamingCollisionWithArg", () {
+  test("TestVariableNamingCollisionWithArg", () {
     var storyStr = r'''=== function knot (a)
                     ~temp a = 1''';
 
-    tests.CompileString(storyStr, countAllVisits: false, testingErrors: true);
-
-    expect(tests.HadError("has already been used"), true);
+    assertError(
+        () => tests.CompileString(storyStr,
+            countAllVisits: false, testingErrors: true),
+        "has already been used");
   });
 
   test("TestTunnelOnwardsDivertAfterWithArg", () {
@@ -2278,8 +2286,8 @@ Unreachable
 * [] blank
         ''';
 
-    tests.CompileString(storyStr, testingErrors: true);
-    expect(tests.HadWarning("Blank choice"), true);
+    assertError(() => tests.CompileString(storyStr, testingErrors: true),
+        "Blank choice");
   });
 
   test("TestTunnelOnwardsWithParamDefaultChoice", () {
@@ -2420,10 +2428,10 @@ VAR x = ->place
     var result = story.ContinueMaximally();
 
     expect("else\nelse\nhi\n", result);
-    expect(story.state.evaluationStack.length == 0, true);
+    expect(story.state.evaluationStack.isEmpty, true);
   });
 
-  test("skip_TestGameInkBackAndForth", () {
+  test("TestGameInkBackAndForth", () {
     var storyStr = r'''
 EXTERNAL gameInc(x)
 
@@ -2446,17 +2454,16 @@ In top external
     // - inkInc just increments to 7 (ink)
     // And the whole thing unwinds again back to game.
 
-    story.BindExternalFunctionGeneral(
-        "gameInc",
-        (List x) => {
-              x[0]++,
-              x[0] = story.EvaluateFunction("inkInc", x[0])
-              // return x[0]
-            });
+    story.BindExternalFunctionGeneral("gameInc", (List args) {
+      int x = args[0];
+      x++;
+      x = story.EvaluateFunction("inkInc", [x]);
+      return x;
+    });
 
     String strResult =
         story.EvaluateFunctionWithTextOutput("topExternal", [5])["text_output"];
-    var finalResult = story.EvaluateFunction("topExternal");
+    var finalResult = story.EvaluateFunction("topExternal", [5]);
 
     expect(7, finalResult);
     expect("In top external\n", strResult);
@@ -2636,7 +2643,7 @@ text 2
     expect("text1\ntext 2\ntext1\ntext 2\n", story.ContinueMaximally());
   });
 
-  test("skip_TestFloorCeilingAndCasts", () {
+  test("TestFloorCeilingAndCasts", () {
     var storyStr = r'''
 {FLOOR(1.2)}
 {INT(1.2)}

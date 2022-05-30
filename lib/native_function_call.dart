@@ -233,8 +233,8 @@ class NativeFunctionCall extends RuntimeObject {
       AddFloatBinaryOp(Min, (x, y) => min(x, y));
 
       AddFloatBinaryOp(Pow, (x, y) => pow(x, y));
-      AddFloatUnaryOp(Floor, (x) => (x).floor());
-      AddFloatUnaryOp(Ceiling, (x) => (x).ceil());
+      AddFloatUnaryOp(Floor, (x) => (x).floorToDouble());
+      AddFloatUnaryOp(Ceiling, (x) => (x).ceilToDouble());
       AddFloatUnaryOp(Int, (x) => (x).floor());
       AddFloatUnaryOp(Float, Identity);
 

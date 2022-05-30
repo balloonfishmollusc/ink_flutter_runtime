@@ -2978,7 +2978,7 @@ Unreachable
         }
 
 
-        [Test ()]
+        [errorTest ()]
         public void TestVariousBlankChoiceWarning ()
         {
         	var storyStr =
@@ -2990,7 +2990,7 @@ Unreachable
             Assert.IsTrue (HadWarning ("Blank choice"));
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestTunnelOnwardsWithParamDefaultChoice ()
         {
             var storyStr =
@@ -3010,7 +3010,7 @@ Unreachable
         }
 
 
-        [Test ()]
+        [okTest ()]
         public void TestTunnelOnwardsToVariableDivertTarget ()
         {
             var storyStr =
@@ -3034,7 +3034,7 @@ This is the_esc
         }
 
 
-        [Test ()]
+        [okTest ()]
         public void TestReadCountVariableTarget ()
         {
             var storyStr =
@@ -3061,7 +3061,7 @@ Count end: {READ_COUNT (x)} {READ_COUNT (-> knot)} {knot}
         }
 
 
-        [Test ()]
+        [okTest ()]
         public void TestDivertTargetsWithParameters ()
         {
             var storyStr =
@@ -3080,7 +3080,7 @@ VAR x = ->place
             Assert.AreEqual ("5\n", story.ContinueMaximally ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestTagOnChoice ()
         {
             var storyStr =
@@ -3102,7 +3102,7 @@ VAR x = ->place
             Assert.AreEqual ("hey", tags[0]);
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestStringContains ()
         {
         	var storyStr =
@@ -3120,7 +3120,7 @@ VAR x = ->place
         	Assert.AreEqual ("true\nfalse\ntrue\ntrue\n", result);
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestEvaluationStackLeaks ()
         {
         	var storyStr =
@@ -3154,7 +3154,7 @@ VAR x = ->place
             Assert.IsTrue (story.state.evaluationStack.Count == 0);
         }
 
-        [Test ()]
+        [errorTest ()]
         public void TestGameInkBackAndForth ()
         {
         	var storyStr =
@@ -3194,7 +3194,7 @@ In top external
         }
 
 
-        [Test ()]
+        [okTest ()]
         public void TestNewlinesWithStringEval ()
         {
         	var storyStr =
@@ -3218,7 +3218,7 @@ B
         }
 
 
-        [Test ()]
+        [okTest ()]
         public void TestNewlinesTrimmingWithFuncExternalFallback ()
         {
         	var storyStr =
@@ -3242,7 +3242,7 @@ Phrase 1
         	Assert.AreEqual ("Phrase 1\nPhrase 2\n", story.ContinueMaximally ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestMultilineLogicWithGlue ()
         {
         	var storyStr =
@@ -3265,7 +3265,7 @@ Phrase 1
 
 
 
-        [Test ()]
+        [okTest ()]
         public void TestNewlineAtStartOfMultilineConditional ()
         {
         	var storyStr =
@@ -3283,7 +3283,7 @@ Phrase 1
         	Assert.AreEqual ("X\nx\n", story.ContinueMaximally ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestTempNotFound ()
         {
         	var storyStr =
@@ -3300,7 +3300,7 @@ hello
         }
 
 
-        [Test ()]
+        [xTest ()]
         public void TestTempNotAllowedCrossStitch ()
         {
         	var storyStr =
@@ -3324,7 +3324,7 @@ hello
 
 
 
-        [Test ()]
+        [okTest ()]
         public void TestTopFlowTerminatorShouldntKillThreadChoices ()
         {
         	var storyStr =
@@ -3344,7 +3344,7 @@ Limes
         }
 
 
-        [Test ()]
+        [okTest ()]
         public void TestNewlineConsistency ()
         {
         	var storyStr =
@@ -3384,7 +3384,7 @@ world
             Assert.AreEqual ("hello\nworld\n", story.ContinueMaximally ());
         }
 
-        [Test ()]
+        [okTest ()]
         public void TestTurns ()
         {
             var storyStr =
@@ -3407,7 +3407,7 @@ world
 
 
 
-        [Test ()]
+        [okTest ()]
         public void TestLogicLinesWithNewlines ()
         {
             // Both "~" lines should be followed by newlines
@@ -3430,7 +3430,7 @@ text 2
             Assert.AreEqual("text1\ntext 2\ntext1\ntext 2\n", story.ContinueMaximally ());
         }
 
-        [Test()]
+        [okTest()]
         public void TestFloorCeilingAndCasts()
         {
             var storyStr =
@@ -3449,7 +3449,7 @@ text 2
         }
 
         // Fix for rogue "can't use as sub-expression" bug
-        [Test()]
+        [errorTest()]
         public void TestUsingFunctionAndIncrementTogether()
         {
             var storyStr =

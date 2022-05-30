@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ink_flutter_runtime/addons/extra.dart';
 import 'package:ink_flutter_runtime/story.dart';
@@ -2281,41 +2282,374 @@ Unreachable
     expect(tests.HadWarning("Blank choice"), true);
   });
 
-  test("", () {});
+  test("TestTunnelOnwardsWithParamDefaultChoice", () {
+    var storyStr = r'''
+-> tunnel ->
 
-  test("", () {});
+== tunnel ==
+* ->-> elsewhere (8)
 
-  test("", () {});
+== elsewhere (x) ==
+{x}
+-> END
+''';
 
-  test("", () {});
+    var story = tests.CompileString(storyStr);
+    expect("8\n", story.ContinueMaximally());
+  });
 
-  test("", () {});
+  test("TestTunnelOnwardsToVariableDivertTarget", () {
+    var storyStr = r'''
+-> outer ->
 
-  test("", () {});
+== outer
+This is outer
+-> cut_to(-> the_esc)
 
-  test("", () {});
+=== cut_to(-> escape) 
+    ->-> escape
+    
+== the_esc
+This is the_esc
+-> END
+''';
 
-  test("", () {});
+    var story = tests.CompileString(storyStr);
+    expect("This is outer\nThis is the_esc\n", story.ContinueMaximally());
+  });
 
-  test("", () {});
+  test("TestReadCountVariableTarget", () {
+    var storyStr = r'''
+VAR x = ->knot
 
-  test("", () {});
+Count start: {READ_COUNT (x)} {READ_COUNT (-> knot)} {knot}
 
-  test("", () {});
+-> x (1) ->
+-> x (2) ->
+-> x (3) ->
 
-  test("", () {});
+Count end: {READ_COUNT (x)} {READ_COUNT (-> knot)} {knot}
+-> END
 
-  test("", () {});
 
-  test("", () {});
+== knot (a) ==
+{a}
+->->
+''';
 
-  test("", () {});
+    var story = tests.CompileString(storyStr, countAllVisits: true);
+    expect("Count start: 0 0 0\n1\n2\n3\nCount end: 3 3 3\n",
+        story.ContinueMaximally());
+  });
 
-  test("", () {});
+  test("TestDivertTargetsWithParameters", () {
+    var storyStr = r'''
+VAR x = ->place
 
-  test("", () {});
+->x (5)
 
-  test("", () {});
+== place (a) ==
+{a}
+-> DONE
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    expect("5\n", story.ContinueMaximally());
+  });
+
+  test("TestTagOnChoice", () {
+    var storyStr = r'''
+* [Hi] Hello -> END #hey
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    story.Continue();
+
+    story.ChooseChoiceIndex(0);
+
+    var txt = story.Continue();
+    var tags = story.currentTags;
+
+    expect("Hello", txt);
+    expect(1, tags.length);
+    expect("hey", tags[0]);
+  });
+
+  test("TestStringContains", () {
+    var storyStr = r'''
+{"hello world" ? "o wo"}
+{"hello world" ? "something else"}
+{"hello" ? ""}
+{"" ? ""}
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    var result = story.ContinueMaximally();
+
+    expect("true\nfalse\ntrue\ntrue\n", result);
+  });
+
+  test("TestEvaluationStackLeaks", () {
+    var storyStr = r'''
+{false:
+    
+- else: 
+    else
+}
+
+{6:
+- 5: five
+- else: else
+}
+
+-> onceTest ->
+-> onceTest ->
+
+== onceTest ==
+{once:
+- hi
+}
+->->
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    var result = story.ContinueMaximally();
+
+    expect("else\nelse\nhi\n", result);
+    expect(story.state.evaluationStack.length == 0, true);
+  });
+
+  test("skip_TestGameInkBackAndForth", () {
+    var storyStr = r'''
+EXTERNAL gameInc(x)
+
+== function topExternal(x)
+In top external
+~ return gameInc(x)
+
+== function inkInc(x)
+~ return x + 1
+
+            ''';
+
+    var story = tests.CompileString(storyStr);
+
+    // Crazy game/ink callstack:
+    // - Game calls "topExternal(5)" (Game -> ink)
+    // - topExternal calls gameInc(5) (ink -> Game)
+    // - gameInk increments to 6
+    // - gameInk calls inkInc(6) (Game -> ink)
+    // - inkInc just increments to 7 (ink)
+    // And the whole thing unwinds again back to game.
+
+    story.BindExternalFunctionGeneral(
+        "gameInc",
+        (List x) => {
+              x[0]++,
+              x[0] = story.EvaluateFunction("inkInc", x[0])
+              // return x[0]
+            });
+
+    String strResult =
+        story.EvaluateFunctionWithTextOutput("topExternal", [5])["text_output"];
+    var finalResult = story.EvaluateFunction("topExternal");
+
+    expect(7, finalResult);
+    expect("In top external\n", strResult);
+  });
+
+  test("TestNewlinesWithStringEval", () {
+    var storyStr = r'''
+A
+~temp someTemp = string()
+B
+
+A 
+{string()}
+B
+
+=== function string()    
+    ~ return "{3}"
+}
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    expect("A\nB\nA\n3\nB\n", story.ContinueMaximally());
+  });
+
+  test("TestNewlinesTrimmingWithFuncExternalFallback", () {
+    var storyStr = r'''
+EXTERNAL TRUE ()
+
+Phrase 1 
+{ TRUE ():
+
+	Phrase 2
+}
+-> END 
+
+=== function TRUE ()
+	~ return true
+''';
+
+    var story = tests.CompileString(storyStr);
+    story.allowExternalFunctionFallbacks = true;
+
+    expect("Phrase 1\nPhrase 2\n", story.ContinueMaximally());
+  });
+
+  test("TestMultilineLogicWithGlue", () {
+    var storyStr = r'''
+{true:
+    a 
+} <> b
+
+
+{true:
+    a 
+} <> { true: 
+    b 
+}
+''';
+    var story = tests.CompileString(storyStr);
+
+    expect("a b\na b\n", story.ContinueMaximally());
+  });
+
+  test("TestNewlineAtStartOfMultilineConditional", () {
+    var storyStr = r'''
+{isTrue():
+    x
+}
+
+=== function isTrue()
+    X
+	~ return true
+        ''';
+    var story = tests.CompileString(storyStr);
+
+    expect("X\nx\n", story.ContinueMaximally());
+  });
+
+  test("TestTempNotFound", () {
+    var storyStr = r'''
+{x}
+~temp x = 5
+hello
+                ''';
+    var story = tests.CompileString(storyStr, testingErrors: true);
+
+    expect("0\nhello\n", story.ContinueMaximally());
+
+    expect(tests.HadWarning(), true);
+  });
+
+  test("TestTopFlowTerminatorShouldntKillThreadChoices", () {
+    var storyStr = r'''
+<- move
+Limes 
+
+=== move
+	* boop
+        -> END
+                    ''';
+
+    var story = tests.CompileString(storyStr);
+
+    expect("Limes\n", story.Continue());
+    expect(story.currentChoices.length == 1, true);
+  });
+
+  test("TestNewlineConsistency", () {
+    var storyStr = r'''
+hello -> world
+== world
+world 
+-> END''';
+
+    var story = tests.CompileString(storyStr);
+    expect("hello world\n", story.ContinueMaximally());
+
+    storyStr = r'''
+* hello -> world
+== world
+world 
+-> END''';
+    story = tests.CompileString(storyStr);
+
+    story.Continue();
+    story.ChooseChoiceIndex(0);
+    expect("hello world\n", story.ContinueMaximally());
+
+    storyStr = r'''
+* hello 
+	-> world
+== world
+world 
+-> END''';
+    story = tests.CompileString(storyStr);
+
+    story.Continue();
+    story.ChooseChoiceIndex(0);
+    expect("hello\nworld\n", story.ContinueMaximally());
+  });
+
+  test("TestTurns", () {
+    var storyStr = r'''
+-> c
+- (top)
++ (c) [choice]
+    {TURNS ()}
+    -> top
+                    ''';
+
+    var story = tests.CompileString(storyStr);
+
+    for (int i = 0; i < 10; i++) {
+      expect("$i\n", story.Continue());
+      story.ChooseChoiceIndex(0);
+    }
+  });
+
+  test("TestLogicLinesWithNewlines", () {
+    // Both "~" lines should be followed by newlines
+    // since func() has a text output side effect.
+    var storyStr = r'''
+~ func ()
+text 2
+
+~temp tempVar = func ()
+text 2
+
+== function func ()
+	text1
+	~ return true
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    expect("text1\ntext 2\ntext1\ntext 2\n", story.ContinueMaximally());
+  });
+
+  test("skip_TestFloorCeilingAndCasts", () {
+    var storyStr = r'''
+{FLOOR(1.2)}
+{INT(1.2)}
+{CEILING(1.2)}
+{CEILING(1.2) / 3}
+{INT(CEILING(1.2)) / 3}
+{FLOOR(1)}
+''';
+
+    var story = tests.CompileString(storyStr);
+
+    expect("1\n1\n2\n0.6666667\n0\n1\n", story.ContinueMaximally());
+  });
 
   test("", () {});
 
